@@ -5,6 +5,7 @@ import { agentApi } from '../lib/api-client';
 import { supabase } from '../lib/supabase';
 import { driveService } from '../lib/driveService';
 import { ArtifactCard } from '../components/chat/ArtifactCard';
+import AgentThoughtPanel, { ThoughtStep } from '../components/chat/AgentThoughtPanel';
 import CircuitBackground from '../components/ui/CircuitBackground';
 import ModelDropdownWithSearch from '../components/ModelDropdownWithSearch';
 import { PostAST } from './arcco-pages/types/ast';
@@ -118,6 +119,11 @@ const ArccoChatPage: React.FC<ArccoChatPageProps> = ({
 
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [terminalContent, setTerminalContent] = useState('');
+
+  const [agentThoughts, setAgentThoughts] = useState<ThoughtStep[]>([]);
+  const [isThoughtsExpanded, setIsThoughtsExpanded] = useState(true);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const thoughtsStartTimeRef = useRef<number>(0);
   const [previewData, setPreviewData] = useState<{ url?: string, filename: string, type: 'pdf' | 'excel' | 'code' | 'design' | 'other', content?: string, ast?: any } | null>(null);
 
   const arccoEmblemUrl = "https://qscezcbpwvnkqoevulbw.supabase.co/storage/v1/object/public/Chipro%20calculadora/8.png";
@@ -182,6 +188,15 @@ const ArccoChatPage: React.FC<ArccoChatPageProps> = ({
     }
   }, [initialMessage]);
 
+  // Timer para elapsed seconds do painel de pensamentos
+  useEffect(() => {
+    if (!isLoading || agentThoughts.length === 0) return;
+    const interval = setInterval(() => {
+      setElapsedSeconds(Math.round((Date.now() - thoughtsStartTimeRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isLoading, agentThoughts.length]);
+
   const saveToSession = (msgs: Message[]) => {
     if (!msgs || msgs.length === 0) return;
     const session: ChatSession = {
@@ -217,6 +232,10 @@ const ArccoChatPage: React.FC<ArccoChatPageProps> = ({
     setInputValue('');
     setAttachments([]);
     setIsLoading(true);
+    setAgentThoughts([]);
+    setIsThoughtsExpanded(true);
+    setElapsedSeconds(0);
+    thoughtsStartTimeRef.current = Date.now();
 
     const assistantMsgId = (Date.now() + 1).toString();
     const placeholderAiMsg: Message = { id: assistantMsgId, role: 'assistant', content: '', timestamp: new Date().toISOString() };
@@ -297,32 +316,44 @@ Não adicione comentários. Utilize 'TextOverlay', 'ImageOverlay' ou 'Shape' par
 
       await agentApi.chat(formattedMessages, systemPrompt, (type: string, content: string) => {
 
-        // Handle terminal logs for Agent Mode
+        // Agent Thought Panel — captura os steps do orquestrador/especialistas
+        if (type === 'steps') {
+          const label = content.replace(/<\/?step>/g, '').trim();
+          if (label) {
+            setAgentThoughts(prev => {
+              const updated = prev.map(s =>
+                s.status === 'running' ? { ...s, status: 'done' as const } : s
+              );
+              return [...updated, { label, status: 'running' }];
+            });
+          }
+          return;
+        }
+
+        // Terminal legado (Agent Mode)
         if (isAgentMode) {
           let logStep = '';
-          if (type === 'thought') logStep = `\n🤔 Pensando...\n`;
-          else if (type === 'action') logStep = `\n⚡ Action: ${content}\n`;
-          else if (type === 'observation') logStep = `\n👀 Observation: ${content}\n`;
+          if (type === 'action') logStep = `\n⚡ Action: ${content}\n`;
           else if (type === 'error') logStep = `\n❌ Erro: ${content}\n`;
-
           if (logStep) {
             terminalLogs += logStep;
             setTerminalContent(prev => prev + logStep);
           }
         }
 
-        // Handle the final chat response flowing back
         if (type === 'chunk') {
-          // As soon as the agent starts talking, automatically hide the "thinking" terminal
-          // This gives the Vibe Coding / Google AI Studio UX feel.
-          if (!hasStartedTalking && isAgentMode) {
+          if (!hasStartedTalking) {
             hasStartedTalking = true;
-            setIsTerminalOpen(false);
+            // Marca o último step como concluído e recolhe o painel
+            setAgentThoughts(prev =>
+              prev.map(s => s.status === 'running' ? { ...s, status: 'done' as const } : s)
+            );
+            setIsThoughtsExpanded(false);
+            if (isAgentMode) setIsTerminalOpen(false);
           }
 
           fullResponse += content;
 
-          // Optionally filter <step> tags if the backend still spits them out directly
           const cleanChunk = content.replace(/<step>[\s\S]*?(<\/step>|$)/g, '');
           if (cleanChunk) {
             queue.push(cleanChunk);
@@ -709,8 +740,21 @@ Não adicione comentários. Utilize 'TextOverlay', 'ImageOverlay' ou 'Shape' par
                   </div>
                 ))}
 
-                {isTerminalOpen && (
-                  <div className={`flex gap-4 flex-row`}>
+                {/* Agent Thought Panel — mostra steps do orquestrador em tempo real */}
+                {agentThoughts.length > 0 && (
+                  <div className="w-full max-w-[85%] md:max-w-[80%]">
+                    <AgentThoughtPanel
+                      steps={agentThoughts}
+                      isExpanded={isThoughtsExpanded}
+                      onToggle={() => setIsThoughtsExpanded(p => !p)}
+                      elapsedSeconds={elapsedSeconds}
+                    />
+                  </div>
+                )}
+
+                {/* Terminal legado só aparece em Agent Mode explícito sem steps */}
+                {isTerminalOpen && agentThoughts.length === 0 && (
+                  <div className="flex gap-4 flex-row">
                     <div className="max-w-[85%] md:max-w-[80%] w-full">
                       <AgentTerminal
                         isOpen={isTerminalOpen}
@@ -723,8 +767,9 @@ Não adicione comentários. Utilize 'TextOverlay', 'ImageOverlay' ou 'Shape' par
                   </div>
                 )}
 
-                {isLoading && !isTerminalOpen && (
-                  <div className="flex items-center gap-3 animate-pulse ml-12">
+                {/* Loading dots apenas antes do primeiro step chegar */}
+                {isLoading && agentThoughts.length === 0 && !isTerminalOpen && (
+                  <div className="flex items-center gap-3 animate-pulse ml-2">
                     <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '0s' }}></div>
                     <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
