@@ -208,13 +208,12 @@ async def orchestrate_and_stream(
     )
 
     if route:
-        yield sse("steps", f"<step>🧭 Rota identificada: {route}</step>")
+        pass  # Rota por keyword: vai direto para a atividade, sem anunciar
     else:
-        yield sse("steps", "<step>🧭 Orquestrador analisando pedido...</step>")
+        yield sse("steps", "<step>Entendendo sua solicitação...</step>")
         routing = await _llm_orchestrate(messages, model)
         route = routing.get("route", "chat")
         user_intent = routing.get("user_intent", user_intent)
-        yield sse("steps", f"<step>🎯 Especialista selecionado: {route} — {user_intent}</step>")
 
     # ── 2. Chat Normal → streaming direto ─────────────────────────────────────
     if route == "chat":
@@ -223,11 +222,11 @@ async def orchestrate_and_stream(
         return
 
     # ── 3. Modo Agente → Especialista + QA ────────────────────────────────────
-    _SPECIALIST_LABELS = {
-        "web_search": "🔍 Agente de Busca Web",
-        "file_generator": "📄 Agente Gerador de Arquivos",
-        "design": "🎨 Agente de Design Gráfico",
-        "dev": "💻 Agente Dev (Arcco Pages)",
+    _ACTIVITY_LABELS = {
+        "web_search": "Pesquisando na internet",
+        "file_generator": "Gerando o arquivo",
+        "design": "Criando o design",
+        "dev": "Gerando o código da página",
     }
 
     MAX_QA_RETRIES = 2
@@ -235,30 +234,35 @@ async def orchestrate_and_stream(
     current_messages = list(messages)
 
     for attempt in range(MAX_QA_RETRIES + 1):
-        label = _SPECIALIST_LABELS.get(route, route)
+        activity = _ACTIVITY_LABELS.get(route, "Processando")
 
         if attempt == 0:
-            yield sse("steps", f"<step>{label} iniciado...</step>")
+            # Mostra o que está sendo feito + contexto do pedido do usuário
+            intent_summary = user_intent[:80] if user_intent else ""
+            step_label = f"{activity}: {intent_summary}" if intent_summary else f"{activity}..."
+            yield sse("steps", f"<step>{step_label}</step>")
         else:
-            yield sse("steps", f"<step>🔄 QA solicitou correção — tentativa {attempt + 1}</step>")
+            yield sse("steps", f"<step>Refinando resultado...</step>")
 
         # Executar especialista
         try:
             if route == "web_search":
-                yield sse("action", "Pesquisando na internet...")
+                yield sse("steps", "<step>Consultando fontes na web...</step>")
                 specialist_response = await _run_specialist_with_tools(
                     current_messages, model, WEB_SEARCH_SYSTEM_PROMPT, WEB_SEARCH_TOOLS
                 )
             elif route == "file_generator":
-                yield sse("action", "Gerando arquivo...")
+                yield sse("steps", "<step>Montando estrutura do arquivo...</step>")
                 specialist_response = await _run_specialist_with_tools(
                     current_messages, model, FILE_GENERATOR_SYSTEM_PROMPT, FILE_GENERATOR_TOOLS
                 )
             elif route == "design":
+                yield sse("steps", "<step>Posicionando elementos visuais...</step>")
                 specialist_response = await _run_specialist_no_tools(
                     current_messages, model, DESIGN_SYSTEM_PROMPT, max_tokens=3000
                 )
             elif route == "dev":
+                yield sse("steps", "<step>Estruturando o código HTML e estilos...</step>")
                 specialist_response = await _run_specialist_no_tools(
                     current_messages, model, DEV_SYSTEM_PROMPT, max_tokens=6000
                 )
@@ -269,27 +273,24 @@ async def orchestrate_and_stream(
                 return
 
         except Exception as e:
-            yield sse("error", f"Erro no especialista {route}: {e}")
+            yield sse("error", f"Erro ao processar solicitação: {e}")
             return
 
         # ── 4. QA Review ──────────────────────────────────────────────────────
-        yield sse("steps", "<step>✅ QA revisando resposta...</step>")
+        yield sse("steps", "<step>Verificando qualidade do resultado...</step>")
         qa_result = await _qa_review(user_intent, specialist_response, route, model)
 
         if qa_result.get("approved", True):
             break
 
         if attempt < MAX_QA_RETRIES:
-            issues = ", ".join(qa_result.get("issues", []))
             correction = qa_result.get("correction_instruction", "Corrija a resposta.")
-            yield sse("steps", f"<step>⚠️ QA reprovado: {issues}</step>")
-            # Injeta o feedback do QA para a próxima tentativa do especialista
             current_messages = current_messages + [
                 {"role": "assistant", "content": specialist_response},
                 {"role": "user", "content": f"[QA Feedback] {correction}"},
             ]
         else:
-            yield sse("steps", "<step>⚠️ QA: máximo de tentativas atingido. Enviando melhor versão.</step>")
+            yield sse("steps", "<step>Preparando melhor resultado disponível...</step>")
 
     # ── 5. Stream da resposta final ───────────────────────────────────────────
     # Envia em chunks para efeito de streaming suave
