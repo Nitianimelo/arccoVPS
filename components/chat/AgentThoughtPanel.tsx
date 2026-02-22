@@ -13,6 +13,9 @@ interface AgentThoughtPanelProps {
   elapsedSeconds: number;
 }
 
+const stripEmoji = (text: string) =>
+  text.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}\u200d\ufe0f]/gu, '').trim();
+
 const AgentThoughtPanel: React.FC<AgentThoughtPanelProps> = ({
   steps,
   isExpanded,
@@ -77,7 +80,7 @@ const AgentThoughtPanel: React.FC<AgentThoughtPanelProps> = ({
                     : 'text-neutral-700'
                 }`}
               >
-                {step.label}
+                {stripEmoji(step.label)}
               </span>
             </div>
           ))}

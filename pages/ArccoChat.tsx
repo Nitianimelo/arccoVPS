@@ -117,6 +117,7 @@ const ArccoChatPage: React.FC<ArccoChatPageProps> = ({
   const [attachments, setAttachments] = useState<{ name: string, content: string }[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [isFileLoading, setIsFileLoading] = useState(false);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [terminalContent, setTerminalContent] = useState('');
 
@@ -422,14 +423,11 @@ Não adicione comentários. Utilize 'TextOverlay', 'ImageOverlay' ou 'Shape' par
     }
 
     try {
-      setIsLoading(true);
-      showToast(`Extraindo texto de ${file.name}...`, 'info');
-
+      setIsFileLoading(true);
       const text = await agentApi.extractText(file);
-
       if (text) {
         setAttachments(prev => [...prev, { name: file.name, content: text.substring(0, 5000) }]);
-        showToast('Texto do arquivo extraído com sucesso!', 'success');
+        showToast('Arquivo anexado com sucesso!', 'success');
       } else {
         showToast('Não foi possível extrair texto ou o arquivo está vazio.', 'info');
       }
@@ -437,7 +435,7 @@ Não adicione comentários. Utilize 'TextOverlay', 'ImageOverlay' ou 'Shape' par
       console.error('Erro no upload/extração:', err);
       showToast(`Erro ao processar arquivo: ${err.message}`, 'error');
     } finally {
-      setIsLoading(false);
+      setIsFileLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -604,11 +602,15 @@ Não adicione comentários. Utilize 'TextOverlay', 'ImageOverlay' ou 'Shape' par
 
           <input type="file" hidden ref={fileInputRef} onChange={handleFileUpload} />
           <button
-            onClick={() => fileInputRef.current?.click()}
-            className="p-1.5 text-neutral-500 hover:text-white transition-colors rounded-lg hover:bg-[#222]"
-            title="Anexar arquivo de texto (txt, csv, md)"
+            onClick={() => !isFileLoading && fileInputRef.current?.click()}
+            disabled={isFileLoading}
+            className="p-1.5 text-neutral-500 hover:text-white transition-colors rounded-lg hover:bg-[#222] disabled:cursor-not-allowed"
+            title={isFileLoading ? "Processando arquivo..." : "Anexar arquivo de texto (txt, csv, md)"}
           >
-            <Paperclip size={16} />
+            {isFileLoading
+              ? <Loader2 size={16} className="animate-spin text-indigo-400" />
+              : <Paperclip size={16} />
+            }
           </button>
         </div>
 
@@ -617,7 +619,13 @@ Não adicione comentários. Utilize 'TextOverlay', 'ImageOverlay' ou 'Shape' par
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={isAgentMode ? "Descreva a tarefa para o agente..." : "Digite sua mensagem..."}
+          placeholder={
+            isFileLoading
+              ? "Lendo arquivo..."
+              : isAgentMode
+              ? "Descreva a tarefa para o agente..."
+              : "Digite sua mensagem..."
+          }
           className="flex-1 bg-transparent border-none outline-none text-white placeholder-neutral-500 focus:ring-0"
           autoFocus={variant === 'centered'}
         />
