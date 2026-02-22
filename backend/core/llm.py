@@ -108,24 +108,30 @@ async def get_search_key(force_refresh: bool = False) -> str:
         for table_name in ["ApiKeys", "apikeys"]:
             try:
                 url = f"{supabase_url}/rest/v1/{table_name}?select=api_key&provider=eq.{provider}&is_active=eq.true"
+                print(f"[GET_SEARCH_KEY] Querying Supabase: provider={provider} table={table_name}")
                 async with httpx.AsyncClient(timeout=10.0) as client:
                     response = await client.get(url, headers=headers)
+                    print(f"[GET_SEARCH_KEY] Status: {response.status_code} | Body: {response.text[:200]}")
                     if response.status_code != 200:
                         continue
                     rows = response.json()
                     if rows and rows[0].get("api_key"):
                         key = rows[0]["api_key"]
                         _search_key_cache = {"key": key, "ts": now}
-                        logger.info(f"[GET_SEARCH_KEY] {provider} key loaded from Supabase")
+                        print(f"[GET_SEARCH_KEY] OK - {provider} key loaded: {key[:15]}...")
                         return key
-            except Exception:
+                    else:
+                        print(f"[GET_SEARCH_KEY] Rows returned: {rows} — chave não encontrada para provider={provider}")
+            except Exception as e:
+                print(f"[GET_SEARCH_KEY] ERROR provider={provider} table={table_name}: {e}")
                 continue
 
     # Fallback: stale cache se Supabase indisponível
     if _search_key_cache["key"]:
+        print("[GET_SEARCH_KEY] WARN - usando cache antigo (Supabase indisponível)")
         return _search_key_cache["key"]
 
-    logger.warning("[GET_SEARCH_KEY] Nenhuma chave de busca encontrada no Supabase.")
+    print("[GET_SEARCH_KEY] FATAL: Nenhuma chave de busca encontrada no Supabase (tavily/brave).")
     return ""
 
 
