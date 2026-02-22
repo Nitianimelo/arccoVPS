@@ -59,13 +59,16 @@ async def search_web(
 ) -> dict:
     """
     Busca web com fallback automático.
-    Retorna formato compatível com o frontend.
+    Carrega a chave dinamicamente do Supabase (ApiKeys) se não fornecida.
     """
-    from backend.core.config import get_config
-    config = get_config()
+    from backend.core.llm import get_search_key
 
-    tavily_key = tavily_key or config.tavily_api_key
-    brave_key = brave_key or config.brave_api_key
+    if not tavily_key and not brave_key:
+        key = await get_search_key()
+        if key.startswith("tvly-"):
+            tavily_key = key
+        elif key:
+            brave_key = key
 
     # Tavily como primário
     if tavily_key:
@@ -82,20 +85,20 @@ async def search_web(
             logger.error(f"Brave search also failed: {e}")
             raise
 
-    raise ValueError("Nenhuma API key de busca configurada (TAVILY_API_KEY ou BRAVE_SEARCH_API_KEY)")
+    raise ValueError("Nenhuma chave de busca configurada. Adicione 'tavily' ou 'brave' na tabela ApiKeys do Supabase.")
 
 
 async def search_web_formatted(query: str, api_key: Optional[str] = None) -> str:
     """
     Busca e retorna resultado formatado em markdown.
     Usado pelo agente como tool.
+    Carrega a chave dinamicamente do Supabase (ApiKeys) se não fornecida.
     """
-    from backend.core.config import get_config
-    config = get_config()
+    from backend.core.llm import get_search_key
 
-    key = api_key or config.search_api_key
+    key = api_key or await get_search_key()
     if not key:
-        return "ERRO: Chave de API de busca não configurada."
+        return "ERRO: Chave de API de busca não configurada. Adicione 'tavily' ou 'brave' na tabela ApiKeys do Supabase."
 
     try:
         if key.startswith("tvly-"):

@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 # Supabase (tabela ApiKeys) é a Única Fonte da Verdade.
 # Se a chave for alterada no painel admin, será recarregada no próximo ciclo de TTL.
 _api_key_cache: dict = {"key": None, "ts": 0.0}
+_search_key_cache: dict = {"key": None, "ts": 0.0}
 _API_KEY_TTL = 60.0  # segundos
 
 
@@ -73,6 +74,59 @@ async def get_api_key(force_refresh: bool = False) -> str:
 
     print("[GET_API_KEY] FATAL: No API key found in Supabase!")
     raise ValueError("Chave OpenRouter não encontrada no Supabase (tabela ApiKeys)")
+
+
+async def get_search_key(force_refresh: bool = False) -> str:
+    """
+    Busca a API key de busca do Supabase (tabela ApiKeys) — Única Fonte da Verdade.
+    Tenta Tavily primeiro (prefixo 'tvly-'), depois Brave.
+    Cache de 60s para evitar chamadas excessivas.
+    """
+    global _search_key_cache
+
+    from .config import get_config
+    config = get_config()
+
+    now = time.time()
+    cache_valid = (
+        not force_refresh
+        and _search_key_cache["key"]
+        and (now - _search_key_cache["ts"]) < _API_KEY_TTL
+    )
+
+    if cache_valid:
+        return _search_key_cache["key"]
+
+    supabase_url = config.supabase_url
+    supabase_key = config.supabase_key
+    headers = {
+        "apikey": supabase_key,
+        "Authorization": f"Bearer {supabase_key}",
+    }
+
+    for provider in ["tavily", "brave"]:
+        for table_name in ["ApiKeys", "apikeys"]:
+            try:
+                url = f"{supabase_url}/rest/v1/{table_name}?select=api_key&provider=eq.{provider}&is_active=eq.true"
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    response = await client.get(url, headers=headers)
+                    if response.status_code != 200:
+                        continue
+                    rows = response.json()
+                    if rows and rows[0].get("api_key"):
+                        key = rows[0]["api_key"]
+                        _search_key_cache = {"key": key, "ts": now}
+                        logger.info(f"[GET_SEARCH_KEY] {provider} key loaded from Supabase")
+                        return key
+            except Exception:
+                continue
+
+    # Fallback: stale cache se Supabase indisponível
+    if _search_key_cache["key"]:
+        return _search_key_cache["key"]
+
+    logger.warning("[GET_SEARCH_KEY] Nenhuma chave de busca encontrada no Supabase.")
+    return ""
 
 
 async def call_openrouter(
