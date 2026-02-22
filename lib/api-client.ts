@@ -1,0 +1,137 @@
+const API_BASE = '/api/agent';
+
+export interface AgentActionResponse {
+    type: 'action' | 'reasoning' | 'error';
+    intent?: string;
+    confidence?: number;
+    payload?: any;
+    error?: string;
+}
+
+export const agentApi = {
+    /**
+     * Route the user message to the appropriate intent/action
+     */
+    async route(message: string, userId: string, conversationId: string): Promise<AgentActionResponse> {
+        try {
+            const res = await fetch(`${API_BASE}/route`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message, user_id: userId, conversation_id: conversationId })
+            });
+            if (!res.ok) throw new Error(await res.text());
+            return await res.json();
+        } catch (e: any) {
+            console.error('Route API Error:', e);
+            return { type: 'error', error: e.message };
+        }
+    },
+
+    /**
+     * Execute Web Search
+     */
+    async search(query: string, options?: { search_depth?: string, max_results?: number }) {
+        const res = await fetch(`${API_BASE}/search`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, ...options })
+        });
+        return res.json();
+    },
+
+    /**
+     * Generate File (PDF, PPTX, DOCX)
+     */
+    async generateFile(type: 'pdf' | 'pptx' | 'docx' | 'excel', title: string, content: string) {
+        const res = await fetch(`${API_BASE}/files`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type, title, content }) // 'excel' might map to a different handler later or same if unified
+        });
+        return res.json();
+    },
+
+    /**
+     * OCR Scan
+     */
+    async ocr(imageUrl: string) {
+        const res = await fetch(`${API_BASE}/ocr`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_url: imageUrl })
+        });
+        return res.json();
+    },
+
+    /**
+     * General Chat (Reasoning) — consumes SSE stream from backend
+     * Returns the full assembled response text from 'chunk' events.
+     */
+    async chat(messages: any[], systemPrompt: string, onEvent?: (type: string, content: string) => void): Promise<string> {
+        const res = await fetch(`${API_BASE}/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages, system_prompt: systemPrompt })
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Chat API error (${res.status}): ${errorText}`);
+        }
+
+        const reader = res.body!.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = '';
+        let buffer = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                console.log('RAW SSE LINE:', line); // <-- DEBUG
+                try {
+                    const event = JSON.parse(line.slice(6));
+
+                    if (onEvent) onEvent(event.type, event.content);
+
+                    if (event.type === 'chunk') {
+                        fullContent += event.content;
+                    } else if (event.type === 'error') {
+                        throw new Error(event.content);
+                    }
+                } catch (e: any) {
+                    console.error('ERRO DE PARSE SSE. Linha que causou erro:', line, e);
+                }
+            }
+        }
+        return fullContent;
+    },
+
+    /**
+     * Uploads a file (PDF, DOCX, XLSX, etc.) to extract raw text
+     * endpoint: /api/agent/extract-text
+     */
+    async extractText(file: File): Promise<string> {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch(`${API_BASE}/extract-text`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Extraction failed: ${errorText}`);
+        }
+
+        const data = await res.json();
+        return data.text || '';
+    }
+};
