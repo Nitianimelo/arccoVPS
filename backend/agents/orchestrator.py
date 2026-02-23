@@ -23,11 +23,12 @@ from backend.agents.prompts import (
     CHAT_SYSTEM_PROMPT,
     WEB_SEARCH_SYSTEM_PROMPT,
     FILE_GENERATOR_SYSTEM_PROMPT,
+    FILE_MODIFIER_SYSTEM_PROMPT,
     DESIGN_SYSTEM_PROMPT,
     DEV_SYSTEM_PROMPT,
     QA_SYSTEM_PROMPT,
 )
-from backend.agents.tools import WEB_SEARCH_TOOLS, FILE_GENERATOR_TOOLS
+from backend.agents.tools import WEB_SEARCH_TOOLS, FILE_GENERATOR_TOOLS, FILE_MODIFIER_TOOLS
 from backend.agents.executor import execute_tool
 
 logger = logging.getLogger(__name__)
@@ -63,12 +64,34 @@ _KEYWORD_ROUTES = {
     ),
 }
 
+# Detecta link de arquivo gerado em mensagens recentes (Supabase Storage ou extensão direta)
+_FILE_LINK_RE = re.compile(
+    r'\[.*?\]\(https?://[^\)]*\.(xlsx|pdf|pptx)[^\)]*\)',
+    re.IGNORECASE,
+)
+
+# Verbos que indicam modificação sobre algo existente
+_MODIFIER_VERBS_RE = re.compile(
+    r'\b(adicion|acrescent|coloc|insir|inclui|'
+    r'remov|delet|apag|exclu|tira|'
+    r'alter|mud|troc|renome|renomei|'
+    r'edit|corrij|corrigi|atualiz|modific|ajust)\w*',
+    re.IGNORECASE,
+)
+
 
 def _keyword_route(messages: list) -> str | None:
     """Roteamento instantâneo por palavras-chave. Retorna None se ambíguo."""
     last_user = next(
         (m["content"] for m in reversed(messages) if m.get("role") == "user"), ""
     )
+
+    # Prioridade máxima: arquivo gerado recentemente + verbo de modificação
+    # → mesmo sem mencionar "excel/planilha", é uma edição do arquivo existente
+    recent_content = " ".join(str(m.get("content", "")) for m in messages[-8:])
+    if _FILE_LINK_RE.search(recent_content) and _MODIFIER_VERBS_RE.search(str(last_user)):
+        return "file_modifier"
+
     for route, pattern in _KEYWORD_ROUTES.items():
         if pattern.search(str(last_user)):
             return route
@@ -225,6 +248,7 @@ async def orchestrate_and_stream(
     _ACTIVITY_LABELS = {
         "web_search": "Pesquisando na internet",
         "file_generator": "Gerando o arquivo",
+        "file_modifier": "Modificando o arquivo",
         "design": "Criando o design",
         "dev": "Gerando o código da página",
     }
@@ -260,6 +284,11 @@ async def orchestrate_and_stream(
                 yield sse("steps", "<step>Posicionando elementos visuais...</step>")
                 specialist_response = await _run_specialist_no_tools(
                     current_messages, model, DESIGN_SYSTEM_PROMPT, max_tokens=3000
+                )
+            elif route == "file_modifier":
+                yield sse("steps", "<step>Lendo estrutura do arquivo...</step>")
+                specialist_response = await _run_specialist_with_tools(
+                    current_messages, model, FILE_MODIFIER_SYSTEM_PROMPT, FILE_MODIFIER_TOOLS
                 )
             elif route == "dev":
                 yield sse("steps", "<step>Estruturando o código HTML e estilos...</step>")

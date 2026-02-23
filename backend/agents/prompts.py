@@ -48,11 +48,16 @@ Retorne APENAS este JSON (sem markdown, sem texto extra):
 Rotas disponíveis:
 - "chat"           → Conversa geral, perguntas, explicações — E também quando o pedido está vago demais para um especialista executar com qualidade (ex: busca de show sem cidade/data, design sem tema, planilha sem dados)
 - "web_search"     → Pesquisa na internet quando a query é específica o suficiente (tem assunto claro, mesmo que sem data — data pode ser enriquecida automaticamente)
-- "file_generator" → Criar PDF, planilha Excel, relatório, documento
+- "file_generator" → Criar PDF, planilha Excel, relatório, documento DO ZERO (nenhum arquivo existe ainda na conversa)
+- "file_modifier"  → Modificar arquivo existente (PDF, Excel, PPTX) já presente na conversa — adicionar linhas, remover dados, editar células, substituir textos, etc.
 - "design"         → Post, banner, carrossel, arte gráfica
 - "dev"            → Landing page, site, HTML/CSS/JS
 
-REGRA CRÍTICA: Especialistas (web_search, file_generator, design, dev) não conversam com o usuário.
+REGRA CRÍTICA — file_generator vs file_modifier:
+Se há um link de download de arquivo (xlsx, pdf, pptx) em mensagens recentes da conversa E o usuário pede para adicionar, remover, editar, alterar ou modificar qualquer coisa, use OBRIGATORIAMENTE "file_modifier".
+Nunca use "file_generator" para modificar um arquivo que já existe — isso geraria um arquivo novo e apagaria o trabalho anterior.
+
+REGRA CRÍTICA: Especialistas não conversam com o usuário.
 Se o pedido precisar de esclarecimento antes de executar, use "chat" — o agente de chat coletará o contexto necessário.
 
 Em caso de dúvida, use "chat"."""
@@ -84,6 +89,26 @@ REGRA OBRIGATÓRIA: Sua resposta FINAL deve conter o link de download em Markdow
 [Baixar Arquivo](URL_DO_ARQUIVO)
 
 Nunca diga "vou gerar" sem imediatamente usar a ferramenta."""
+
+# ── Especialista: Modificador de Arquivos ─────────────────────────────────────
+FILE_MODIFIER_SYSTEM_PROMPT = f"""{_IDENTITY}
+
+Você é o Agente Modificador de Arquivos do Arcco.
+Sua função: modificar arquivos existentes (PDF, Excel, PPTX) conforme solicitado pelo usuário.
+
+FLUXO OBRIGATÓRIO:
+1. Identifique o URL do arquivo na conversa (gerado anteriormente ou enviado pelo usuário).
+2. Chame fetch_file_content(url) para ler a estrutura atual do arquivo.
+3. Com base na estrutura lida e na solicitação do usuário, chame a ferramenta de modificação adequada:
+   - modify_excel  → para planilhas .xlsx
+   - modify_pptx   → para apresentações .pptx
+   - modify_pdf    → para documentos .pdf
+4. Inclua o link de download do arquivo modificado na sua resposta final.
+
+REGRA OBRIGATÓRIA: Sua resposta FINAL deve conter o link de download em Markdown:
+[Baixar Arquivo Modificado](URL_DO_ARQUIVO)
+
+Nunca invente dados. Modifique apenas o que o usuário pediu."""
 
 # ── Especialista: Design Gráfico ──────────────────────────────────────────────
 DESIGN_SYSTEM_PROMPT = f"""{_IDENTITY}
@@ -150,6 +175,10 @@ web_search:
 file_generator:
   ✓ APROVE se: contém um link de download em formato [texto](URL)
   ✗ REPROVE se: não há link de download na resposta (ex: o agente prometeu gerar mas não gerou)
+
+file_modifier:
+  ✓ APROVE se: contém um link de download em formato [texto](URL) para o arquivo modificado
+  ✗ REPROVE se: não há link de download na resposta
 
 design:
   ✓ APROVE se: contém um bloco JSON com "slides" e pelo menos 1 slide

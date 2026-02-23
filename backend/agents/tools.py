@@ -99,6 +99,123 @@ FILE_GENERATOR_TOOLS = [
     },
 ]
 
+# ── Agente Modificador de Arquivos ───────────────────────────────────────────
+FILE_MODIFIER_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "fetch_file_content",
+            "description": "Baixa e lê a estrutura de um arquivo (PDF, Excel, PPTX) antes de modificar. Sempre chame isso primeiro.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "URL do arquivo a ser lido"}
+                },
+                "required": ["url"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "modify_excel",
+            "description": "Modifica uma planilha Excel (.xlsx) e retorna link de download",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "URL da planilha original"},
+                    "cell_updates": {
+                        "type": "array",
+                        "description": "Células a atualizar",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "sheet": {"type": "string", "description": "Nome da aba (opcional, usa a primeira se omitido)"},
+                                "cell": {"type": "string", "description": "Referência da célula (ex: A1, B3)"},
+                                "value": {"type": "string", "description": "Novo valor"},
+                            },
+                            "required": ["cell", "value"],
+                        },
+                    },
+                    "append_rows": {
+                        "type": "array",
+                        "description": "Linhas a adicionar no final da aba",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "sheet": {"type": "string", "description": "Nome da aba (opcional)"},
+                                "values": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "description": "Valores da linha",
+                                },
+                            },
+                            "required": ["values"],
+                        },
+                    },
+                    "output_filename": {"type": "string", "description": "Nome do arquivo modificado (sem extensão)"},
+                },
+                "required": ["url"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "modify_pptx",
+            "description": "Modifica uma apresentação PowerPoint (.pptx) substituindo textos e retorna link de download",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "URL da apresentação original"},
+                    "text_replacements": {
+                        "type": "array",
+                        "description": "Substituições de texto em todos os slides",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "find": {"type": "string", "description": "Texto a encontrar"},
+                                "replace": {"type": "string", "description": "Texto de substituição"},
+                            },
+                            "required": ["find", "replace"],
+                        },
+                    },
+                    "output_filename": {"type": "string", "description": "Nome do arquivo modificado (sem extensão)"},
+                },
+                "required": ["url", "text_replacements"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "modify_pdf",
+            "description": "Modifica um PDF existente (extrai texto, aplica alterações, regera o documento) e retorna link de download",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "URL do PDF original"},
+                    "text_replacements": {
+                        "type": "array",
+                        "description": "Substituições de texto no documento",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "find": {"type": "string", "description": "Texto a encontrar"},
+                                "replace": {"type": "string", "description": "Texto de substituição"},
+                            },
+                            "required": ["find", "replace"],
+                        },
+                    },
+                    "append_content": {"type": "string", "description": "Conteúdo adicional a inserir no final do documento"},
+                    "output_filename": {"type": "string", "description": "Nome do arquivo modificado (sem extensão)"},
+                },
+                "required": ["url"],
+            },
+        },
+    },
+]
+
 # Design e Dev não têm ferramentas (geração pura de texto/JSON/código)
 DESIGN_TOOLS: list = []
 DEV_TOOLS: list = []

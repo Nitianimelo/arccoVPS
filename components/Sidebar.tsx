@@ -145,8 +145,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside className="w-64 h-screen bg-[#050505] border-r border-neutral-900 flex flex-col fixed left-0 top-0 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.4)]">
 
-      {/* 1. Logo (Image Only) */}
-      <div className="flex flex-row items-center justify-start pt-6 pb-2 px-6 relative">
+      {/* 1. Logo — fixo */}
+      <div className="flex flex-row items-center justify-start pt-6 pb-2 px-6 shrink-0">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('ARCCO_CHAT')}>
           <img
             src="https://qscezcbpwvnkqoevulbw.supabase.co/storage/v1/object/public/Chipro%20calculadora/arcco%20(1).png"
@@ -156,10 +156,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* 2. Main Nav */}
-      <nav className="flex-1 px-2 py-4 overflow-y-auto space-y-1 scrollbar-hide">
-
-        {/* Nova Interação - Triggers Reset */}
+      {/* 2. Nova Interação — fixo */}
+      <div className="px-2 pb-2 shrink-0">
         <NavButton
           item={{ id: 'ARCCO_CHAT', label: 'Nova Interação', icon: MessageSquare }}
           isActive={currentView === 'ARCCO_CHAT'}
@@ -168,18 +166,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClickOverride={onNewInteraction}
           onTriggerUpsell={onTriggerUpsell}
         />
+      </div>
 
-        {/* 3. Recent Interactions */}
+      {/* 3. Sessões recentes + Assistentes — rolável */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-2 min-h-0">
+
         {recentSessions.length > 0 && (
-          <div className="pt-2 mt-2 border-t border-[#1a1a1a]">
+          <div className="pt-1 border-t border-[#1a1a1a]">
             <SectionHeader label="Recentes" icon={<Clock size={10} className="text-neutral-600" />} />
             <div className="space-y-0.5 px-2">
               {recentSessions.map((session) => (
                 <div key={session.id} className="relative group w-full flex items-center">
                   <button
-                    onClick={() => {
-                      if (onLoadSession) onLoadSession(session.id);
-                    }}
+                    onClick={() => { if (onLoadSession) onLoadSession(session.id); }}
                     className="w-full flex items-center gap-3 px-3 py-2 text-sm text-neutral-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
                   >
                     <MessageCircle size={16} className="text-neutral-600 group-hover:text-indigo-400 transition-colors flex-shrink-0" />
@@ -197,7 +196,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {/* 4. Assistants Dropdown */}
         <div className="pt-2">
           <button
             onClick={() => setAssistantsOpen(!assistantsOpen)}
@@ -213,7 +211,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   key={ast.id}
                   onClick={() => {
-                    if (onNewInteraction) onNewInteraction(); // Reset for specific assistant context
+                    if (onNewInteraction) onNewInteraction();
                     onSetAssistantContext(ast.label);
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2 text-sm text-neutral-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors group"
@@ -226,7 +224,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        {/* 5. App Tools (Legacy Apps + Drive) */}
+      </div>
+
+      {/* 4. Apps — fixo */}
+      <div className="px-2 pt-2 pb-1 border-t border-[#1a1a1a] shrink-0">
         <SectionHeader label="APPS" />
         {appTools.map((item) => (
           <NavButton
@@ -238,11 +239,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onTriggerUpsell={onTriggerUpsell}
           />
         ))}
+      </div>
 
-      </nav>
-
-      {/* 6. Bottom / Profile */}
-      <div className="p-4 border-t border-neutral-900 bg-[#050505]">
+      {/* 5. Conta — fixo */}
+      <div className="p-4 border-t border-neutral-900 shrink-0">
         <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-neutral-900/50 cursor-pointer transition-colors group">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
             {userName.charAt(0)}
