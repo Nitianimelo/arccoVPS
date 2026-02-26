@@ -1,0 +1,41 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+[functions]
+  [functions.agent-chat]
+    timeout = 60
+
+
+[dev]
+  command = "npm run dev"
+  targetPort = 3000
+  port = 8893
+  publish = "dist"
+  autoLaunch = false
+  functions = "netlify/functions"
+  functionsTimeout = 120
+
+[[redirects]]
+  from = "/api/agent/route"
+  to = "/.netlify/functions/agent-router"
+  status = 200
+
+[[redirects]]
+  from = "/api/agent/search"
+  to = "/.netlify/functions/search"
+  status = 200
+
+[[redirects]]
+  from = "/api/agent/files"
+  to = "/.netlify/functions/files"
+  status = 200
+
+[[redirects]]
+  from = "/api/agent/ocr"
+  to = "/.netlify/functions/ocr"
+  status = 200
+
+[[redirects]]
+  from = "/api/agent/chat"
+  to = "/.netlify/functions/agent-chat"
+  status = 200
