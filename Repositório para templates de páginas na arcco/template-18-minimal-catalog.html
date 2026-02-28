@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUNA - Coleção Minimalista</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background: #fafafa; }
+        .product-card {
+            background: white;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #f0f0f0;
+        }
+        .product-card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.08);
+            border-color: #e0e0e0;
+        }
+        .product-card img {
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .product-card:hover img {
+            transform: scale(1.05);
+        }
+        .minimal-btn {
+            background: #1a1a1a;
+            color: white;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .minimal-btn:hover {
+            background: #333;
+            transform: translateY(-2px);
+        }
+        .nav-minimal {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .nav-minimal.scrolled {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        .category-pill {
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+        }
+        .category-pill:hover, .category-pill.active {
+            background: #1a1a1a;
+            border-color: #1a1a1a;
+            color: white;
+        }
+        .quick-view {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1a1a1a;
+            color: white;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .product-card:hover .quick-view {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="text-[#1a1a1a] antialiased">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 nav-minimal" id="navbar">
+        <div class="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
+            <a href="#" class="font-bold text-2xl tracking-tight">LUNA</a>
+            <div class="hidden md:flex items-center gap-10">
+                <a href="#" class="text-sm text-[#1a1a1a] hover:text-gray-500 transition-colors">Coleção</a>
+                <a href="#" class="text-sm text-[#1a1a1a] hover:text-gray-500 transition-colors">Sobre</a>
+                <a href="#" class="text-sm text-[#1a1a1a] hover:text-gray-500 transition-colors">Contato</a>
+            </div>
+            <button class="minimal-btn px-6 py-2.5 rounded-lg text-sm font-semibold">
+                Carrinho (0)
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="pt-32 pb-16">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="text-center max-w-3xl mx-auto">
+                <p class="text-sm font-medium text-gray-500 mb-4">NOVA COLEÇÃO 2024</p>
+                <h1 class="text-5xl md:text-7xl font-bold leading-tight mb-6">Essencial.<br>Minimal.</h1>
+                <p class="text-xl text-gray-600">Peças atempororas para quem busca simplicidade e elegância.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="py-12">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="flex flex-wrap justify-center gap-3">
+                <button class="category-pill active px-8 py-3 rounded-full text-sm font-medium">Todos</button>
+                <button class="category-pill px-8 py-3 rounded-full text-sm font-medium text-[#1a1a1a]">Acessórios</button>
+                <button class="category-pill px-8 py-3 rounded-full text-sm font-medium text-[#1a1a1a]">Roupas</button>
+                <button class="category-pill px-8 py-3 rounded-full text-sm font-medium text-[#1a1a1a]">Calçados</button>
+                <button class="category-pill px-8 py-3 rounded-full text-sm font-medium text-[#1a1a1a]">Bolsas</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products -->
+    <section class="py-16">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="product-card rounded-lg overflow-hidden relative">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com/photos-1926769" alt="Product" class="w-full h-80 object-cover">
+                        <div class="quick-view py-4 text-center">
+                            <span class="text-sm font-medium">Ver Detalhes</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">Acessório</p>
+                        <h3 class="font-semibold text-lg mb-2">Bolsa Minimal</h3>
+                        <p class="text-xl font-bold">R$ 890</p>
+                    </div>
+                </div>
+                <div class="product-card rounded-lg overflow-hidden relative">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com/photos-1092687" alt="Product" class="w-full h-80 object-cover">
+                        <div class="quick-view py-4 text-center">
+                            <span class="text-sm font-medium">Ver Detalhes</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">Roupa</p>
+                        <h3 class="font-semibold text-lg mb-2">Blazer Clean</h3>
+                        <p class="text-xl font-bold">R$ 1.290</p>
+                    </div>
+                </div>
+                <div class="product-card rounded-lg overflow-hidden relative">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com/photos-1596555067433-7d75f62333b4" alt="Product" class="w-full h-80 object-cover">
+                        <div class="quick-view py-4 text-center">
+                            <span class="text-sm font-medium">Ver Detalhes</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">Calçado</p>
+                        <h3 class="font-semibold text-lg mb-2">Sapato Low</h3>
+                        <p class="text-xl font-bold">R$ 690</p>
+                    </div>
+                </div>
+                <div class="product-card rounded-lg overflow-hidden relative">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com/photos-1584917865511" alt="Product" class="w-full h-80 object-cover">
+                        <div class="quick-view py-4 text-center">
+                            <span class="text-sm font-medium">Ver Detalhes</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">Bolsa</p>
+                        <h3 class="font-semibold text-lg mb-2">Tote Simple</h3>
+                        <p class="text-xl font-bold">R$ 490</p>
+                    </div>
+                </div>
+                <div class="product-card rounded-lg overflow-hidden relative">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com/photos-1515886657613-9f3515b0c78f" alt="Product" class="w-full h-80 object-cover">
+                        <div class="quick-view py-4 text-center">
+                            <span class="text-sm font-medium">Ver Detalhes</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">Roupa</p>
+                        <h3 class="font-semibold text-lg mb-2">Vestido Slip</h3>
+                        <p class="text-xl font-bold">R$ 790</p>
+                    </div>
+                </div>
+                <div class="product-card rounded-lg overflow-hidden relative">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com/photos-1483985988758" alt="Product" class="w-full h-80 object-cover">
+                        <div class="quick-view py-4 text-center">
+                            <span class="text-sm font-medium">Ver Detalhes</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">Acessório</p>
+                        <h3 class="font-semibold text-lg mb-2">Relógio Clean</h3>
+                        <p class="text-xl font-bold">R$ 1.990</p>
+                    </div>
+                </div>
+                <div class="product-card rounded-lg overflow-hidden relative">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com/photos-2033997" alt="Product" class="w-full h-80 object-cover">
+                        <div class="quick-view py-4 text-center">
+                            <span class="text-sm font-medium">Ver Detalhes</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">Roupa</p>
+                        <h3 class="font-semibold text-lg mb-2">Jaqueta Oversize</h3>
+                        <p class="text-xl font-bold">R$ 1.490</p>
+                    </div>
+                </div>
+                <div class="product-card rounded-lg overflow-hidden relative">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com/photos-1213245" alt="Product" class="w-full h-80 object-cover">
+                        <div class="quick-view py-4 text-center">
+                            <span class="text-sm font-medium">Ver Detalhes</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">Acessório</p>
+                        <h3 class="font-semibold text-lg mb-2">Óculos Minimal</h3>
+                        <p class="text-xl font-bold">R$ 590</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section class="py-24 bg-[#1a1a1a] text-white">
+        <div class="max-w-4xl mx-auto px-8 text-center">
+            <h2 class="text-4xl font-bold mb-4">Fique por dentro</h2>
+            <p class="text-xl text-gray-400 mb-8">Inscreva-se para receber novidades e ofertas exclusivas.</p>
+            <div class="flex flex-col md:flex-row gap-4 max-w-xl mx-auto">
+                <input type="email" placeholder="Seu e-mail" class="flex-1 px-6 py-4 bg-white/10 border border-white/20 rounded-full text-white placeholder-gray-500 focus:border-white focus:outline-none transition-colors">
+                <button class="minimal-btn px-8 py-4 rounded-full font-semibold">
+                    Inscrever
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 py-12">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <a href="#" class="font-bold text-2xl">LUNA</a>
+                <p class="text-gray-500 text-sm">© 2024 LUNA. Minimalista por natureza.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Category pills
+        const categoryPills = document.querySelectorAll('.category-pill');
+        categoryPills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                categoryPills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+            });
+        });
+
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+    </script>
+</body>
+</html>

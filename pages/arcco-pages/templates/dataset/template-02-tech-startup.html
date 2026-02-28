@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusAI - Intelligence for Tomorrow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --accent: #06b6d4;
+            --dark: #0f0f1a;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--dark); }
+        h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
+        .neumorphic {
+            background: linear-gradient(145deg, #1a1a2e, #16162b);
+            box-shadow: 20px 20px 60px #0b0b13, -20px -20px 60px #1f1f3a;
+            border: 1px solid rgba(99, 102, 241, 0.1);
+        }
+        .neumorphic-inset {
+            background: linear-gradient(145deg, #16162b, #1a1a2e);
+            box-shadow: inset 8px 8px 16px #0b0b13, inset -8px -8px 16px #1f1f3a;
+        }
+        .neumorphic-btn {
+            background: linear-gradient(145deg, #1a1a2e, #16162b);
+            box-shadow: 5px 5px 15px #0b0b13, -5px -5px 15px #1f1f3a;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .neumorphic-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 8px 8px 20px #0b0b13, -8px -8px 20px #1f1f3a;
+        }
+        .neumorphic-btn:active {
+            box-shadow: inset 5px 5px 15px #0b0b13, inset -5px -5px 15px #1f1f3a;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .gradient-border {
+            position: relative;
+            background: linear-gradient(var(--dark), var(--dark)) padding-box,
+                        linear-gradient(135deg, var(--primary), var(--accent)) border-box;
+            border: 2px solid transparent;
+        }
+        .glow {
+            box-shadow: 0 0 60px rgba(99, 102, 241, 0.3);
+        }
+        .glow-purple {
+            box-shadow: 0 0 60px rgba(139, 92, 246, 0.3);
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes float-gentle {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+        .float-gentle { animation: float-gentle 4s ease-in-out infinite; }
+        .float-gentle-delay { animation: float-gentle 4s ease-in-out infinite 1s; }
+        @keyframes slide-in {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .slide-in { animation: slide-in 0.6s ease-out forwards; }
+        .card-enter {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-enter.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .stat-counter { font-variant-numeric: tabular-nums; }
+        .feature-icon {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .neumorphic-btn:hover .feature-icon {
+            transform: rotateY(180deg);
+        }
+        .nav-glass {
+            background: rgba(15, 15, 26, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+        }
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        .smooth-corner { border-radius: 20px; }
+        .cyber-grid {
+            background-image:
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-gradient::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s;
+        }
+        .btn-gradient:hover::before { left: 100%; }
+        .btn-gradient:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.5);
+        }
+    </style>
+</head>
+<body class="text-white min-h-screen cyber-grid">
+    <!-- Particles Container -->
+    <div id="particles" class="fixed inset-0 pointer-events-none z-0"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 nav-glass">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6366f1] to-[#8b5cf6] flex items-center justify-center">
+                        <i data-lucide="cpu" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div class="absolute inset-0 rounded-xl bg-[#6366f1] pulse-ring"></div>
+                </div>
+                <span class="font-bold text-xl tracking-tight">NexusAI</span>
+            </div>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#features" class="text-gray-300 hover:text-white transition-colors text-sm">Features</a>
+                <a href="#pricing" class="text-gray-300 hover:text-white transition-colors text-sm">Pricing</a>
+                <a href="#docs" class="text-gray-300 hover:text-white transition-colors text-sm">Docs</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="text-gray-300 hover:text-white transition-colors text-sm">Sign In</button>
+                <button class="btn-gradient px-6 py-2.5 rounded-xl text-sm font-semibold">Get Started</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center justify-center pt-20 relative overflow-hidden">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-[#6366f1] to-[#06b6d4] opacity-10 rounded-full blur-3xl"></div>
+        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center relative z-10">
+            <div class="space-y-8">
+                <div class="inline-flex items-center gap-2 neumorphic px-4 py-2 rounded-full">
+                    <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                    <span class="text-sm text-gray-300">v2.0 Now Available</span>
+                </div>
+                <h1 class="text-5xl md:text-7xl font-bold leading-tight">
+                    Build AI with
+                    <span class="gradient-text block">Intelligence</span>
+                </h1>
+                <p class="text-xl text-gray-400 leading-relaxed max-w-lg">
+                    The next-generation AI platform that transforms complex data into actionable insights. Scale from prototype to production.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <button class="btn-gradient px-8 py-4 rounded-xl font-semibold text-lg flex items-center gap-2">
+                        Start Building
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                    <button class="neumorphic-btn px-8 py-4 rounded-xl font-semibold flex items-center gap-2 text-gray-300">
+                        <i data-lucide="play" class="w-5 h-5"></i>
+                        Watch Demo
+                    </button>
+                </div>
+                <div class="flex items-center gap-8 pt-6">
+                    <div>
+                        <p class="text-3xl font-bold stat-counter" data-target="10000">0</p>
+                        <p class="text-sm text-gray-500">Active Users</p>
+                    </div>
+                    <div class="w-px h-12 bg-gray-700"></div>
+                    <div>
+                        <p class="text-3xl font-bold stat-counter" data-target="99">0</p>
+                        <p class="text-sm text-gray-500">% Uptime</p>
+                    </div>
+                    <div class="w-px h-12 bg-gray-700"></div>
+                    <div>
+                        <p class="text-3xl font-bold stat-counter" data-target="50">0</p>
+                        <p class="text-sm text-gray-500">ms Latency</p>
+                    </div>
+                </div>
+            </div>
+            <div class="relative">
+                <div class="neumorphic smooth-corner p-6 float-gentle glow">
+                    <div class="neumorphic-inset rounded-xl p-6 space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                        </div>
+                        <div class="font-mono text-sm">
+                            <p class="text-purple-400">const</p>
+                            <p class="text-blue-400">response</p>
+                            <p class="text-gray-500">= await nexus.ai.analyze({</p>
+                            <p class="pl-4 text-green-400">model: <span class="text-yellow-400">"gpt-4"</span>,</p>
+                            <p class="pl-4 text-green-400">context: <span class="text-yellow-400">"your-data"</span></p>
+                            <p class="text-gray-500">});</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute -bottom-8 -right-8 neumorphic smooth-corner p-4 float-gentle-delay">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
+                            <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <div>
+                            <p class="font-semibold">10x Faster</p>
+                            <p class="text-xs text-gray-500">Processing</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="inline-block px-4 py-2 rounded-full neumorphic text-sm text-gray-300 mb-4">Features</span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">Everything you <span class="gradient-text">need</span></h2>
+                <p class="text-xl text-gray-400 max-w-2xl mx-auto">Powerful tools designed for developers who demand the best.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="neumorphic smooth-corner p-8 card-enter">
+                    <div class="neumorphic-btn w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
+                        <i data-lucide="brain" class="w-8 h-8 text-[#6366f1] feature-icon"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold mb-3">Neural Processing</h3>
+                    <p class="text-gray-400 mb-6">Advanced neural networks that learn and adapt to your specific use case.</p>
+                    <a href="#" class="text-[#6366f1] font-medium flex items-center gap-2 hover:gap-3 transition-all">
+                        Learn more <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+                <div class="neumorphic smooth-corner p-8 card-enter" style="transition-delay: 0.1s;">
+                    <div class="neumorphic-btn w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-[#8b5cf6] feature-icon"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold mb-3">Enterprise Security</h3>
+                    <p class="text-gray-400 mb-6">Bank-grade encryption and SOC 2 compliance for complete peace of mind.</p>
+                    <a href="#" class="text-[#8b5cf6] font-medium flex items-center gap-2 hover:gap-3 transition-all">
+                        Learn more <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+                <div class="neumorphic smooth-corner p-8 card-enter" style="transition-delay: 0.2s;">
+                    <div class="neumorphic-btn w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
+                        <i data-lucide="bar-chart-3" class="w-8 h-8 text-[#06b6d4] feature-icon"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold mb-3">Real-time Analytics</h3>
+                    <p class="text-gray-400 mb-6">Live dashboards with actionable insights at your fingertips.</p>
+                    <a href="#" class="text-[#06b6d4] font-medium flex items-center gap-2 hover:gap-3 transition-all">
+                        Learn more <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Integration Section -->
+    <section class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div>
+                    <span class="inline-block px-4 py-2 rounded-full neumorphic text-sm text-gray-300 mb-4">Integrations</span>
+                    <h2 class="text-4xl md:text-5xl font-bold mb-6">Works with your <span class="gradient-text">stack</span></h2>
+                    <p class="text-xl text-gray-400 mb-8">Connect seamlessly with your existing tools and workflows. From data pipelines to CRM systems.</p>
+                    <div class="flex flex-wrap gap-3">
+                        <div class="neumorphic px-4 py-3 rounded-xl flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-blue-500"></div>
+                            <span class="text-sm">Python</span>
+                        </div>
+                        <div class="neumorphic px-4 py-3 rounded-xl flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-yellow-500"></div>
+                            <span class="text-sm">JavaScript</span>
+                        </div>
+                        <div class="neumorphic px-4 py-3 rounded-xl flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-purple-500"></div>
+                            <span class="text-sm">Ruby</span>
+                        </div>
+                        <div class="neumorphic px-4 py-3 rounded-xl flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-green-500"></div>
+                            <span class="text-sm">Go</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="neumorphic smooth-corner p-8 glow-purple">
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-4 p-4 neumorphic-inset rounded-xl">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                                <i data-lucide="database" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold">PostgreSQL</p>
+                                <p class="text-sm text-gray-500">Connected</p>
+                            </div>
+                            <i data-lucide="check-circle" class="w-6 h-6 text-green-400"></i>
+                        </div>
+                        <div class="flex items-center gap-4 p-4 neumorphic-inset rounded-xl">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center">
+                                <i data-lucide="git-branch" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold">GitHub</p>
+                                <p class="text-sm text-gray-500">Connected</p>
+                            </div>
+                            <i data-lucide="check-circle" class="w-6 h-6 text-green-400"></i>
+                        </div>
+                        <div class="flex items-center gap-4 p-4 neumorphic-inset rounded-xl">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
+                                <i data-lucide="slack" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold">Slack</p>
+                                <p class="text-sm text-gray-500">Connected</p>
+                            </div>
+                            <i data-lucide="check-circle" class="w-6 h-6 text-green-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-24 relative">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="neumorphic smooth-corner p-12 text-center glow">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to <span class="gradient-text">transform</span>?</h2>
+                <p class="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">Join thousands of developers building the future with NexusAI.</p>
+                <button class="btn-gradient px-10 py-4 rounded-xl font-semibold text-lg flex items-center gap-2 mx-auto">
+                    Start Free Trial
+                    <i data-lucide="rocket" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="neumorphic py-12 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6366f1] to-[#8b5cf6] flex items-center justify-center">
+                    <i data-lucide="cpu" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="font-bold text-xl tracking-tight">NexusAI</span>
+            </div>
+            <p class="text-gray-500">© 2024 NexusAI. Built for the future.</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Counter Animation
+        const counters = document.querySelectorAll('.stat-counter');
+        const animateCounter = (counter) => {
+            const target = parseInt(counter.dataset.target);
+            const duration = 2000;
+            const increment = target / (duration / 16);
+            let current = 0;
+            const update = () => {
+                current += increment;
+                if (current < target) {
+                    counter.textContent = Math.floor(current).toLocaleString();
+                    requestAnimationFrame(update);
+                } else {
+                    counter.textContent = target.toLocaleString();
+                }
+            };
+            update();
+        };
+
+        // Intersection Observer for counters
+        const counterObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateCounter(entry.target);
+                    counterObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        counters.forEach(counter => counterObserver.observe(counter));
+
+        // Card Animation
+        const cards = document.querySelectorAll('.card-enter');
+        const cardObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        cards.forEach(card => cardObserver.observe(card));
+
+        // Particle Effect
+        const particleContainer = document.getElementById('particles');
+        const createParticle = () => {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            particleContainer.appendChild(particle);
+
+            setTimeout(() => {
+                particle.remove();
+            }, 5000);
+        };
+
+        setInterval(createParticle, 500);
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

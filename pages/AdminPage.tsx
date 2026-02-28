@@ -513,8 +513,14 @@ export const AdminPage: React.FC = () => {
 
   // Dados da aba Pages Builder (carregados quando a aba é aberta)
   const [pagesModeloCriacao, setPagesModeloCriacao] = useState('anthropic/claude-3.5-sonnet');
+  const [pagesModeloEdicao, setPagesModeloEdicao] = useState('anthropic/claude-3.5-sonnet');
+  const [pagesModeloCopywriter, setPagesModeloCopywriter] = useState('anthropic/claude-3.5-sonnet');
   const [pagesPromptCriacao, setPagesPromptCriacao] = useState('');
+  const [pagesPromptEdicao, setPagesPromptEdicao] = useState('');
   const [pagesPromptCopywriter, setPagesPromptCopywriter] = useState('');
+  const [pagesModeloRoteamento, setPagesModeloRoteamento] = useState('google/gemini-2.5-flash');
+  const [pagesPromptRoteamento, setPagesPromptRoteamento] = useState('');
+
   const [pagesConfigLoading, setPagesConfigLoading] = useState(false);
   const [pagesConfigSaving, setPagesConfigSaving] = useState(false);
   const [pagesConfigSaved, setPagesConfigSaved] = useState(false);
@@ -612,8 +618,13 @@ export const AdminPage: React.FC = () => {
         .single();
       if (!error && data) {
         setPagesModeloCriacao(data.modelo_criacao || 'anthropic/claude-3.5-sonnet');
+        setPagesModeloEdicao(data.modelo_edicao || 'anthropic/claude-3.5-sonnet');
+        setPagesModeloCopywriter(data.modelo_copywriter || 'anthropic/claude-3.5-sonnet');
+        setPagesModeloRoteamento(data.modelo_roteamento || 'google/gemini-2.5-flash');
         setPagesPromptCriacao(data.system_prompt_criacao || '');
+        setPagesPromptEdicao(data.system_prompt_edicao || '');
         setPagesPromptCopywriter(data.prompt_copywriter || '');
+        setPagesPromptRoteamento(data.prompt_roteamento || '');
       }
     } catch { /* silencioso */ }
     finally { setPagesConfigLoading(false); }
@@ -628,8 +639,13 @@ export const AdminPage: React.FC = () => {
         .upsert({
           id: 1,
           modelo_criacao: pagesModeloCriacao,
+          modelo_edicao: pagesModeloEdicao,
+          modelo_copywriter: pagesModeloCopywriter,
+          modelo_roteamento: pagesModeloRoteamento,
           system_prompt_criacao: pagesPromptCriacao,
+          system_prompt_edicao: pagesPromptEdicao,
           prompt_copywriter: pagesPromptCopywriter,
+          prompt_roteamento: pagesPromptRoteamento,
           updated_at: new Date().toISOString(),
         });
       if (error) throw new Error(error.message);
@@ -691,10 +707,10 @@ export const AdminPage: React.FC = () => {
   // ── Configuração das tabs ────────────────────────────────────────────────────
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode; count: number }[] = [
-    { id: 'usuarios',     label: 'Usuários',      icon: <Users size={16} />,     count: users.length    },
-    { id: 'apikeys',      label: 'API Keys',       icon: <Key size={16} />,       count: apiKeys.length  },
-    { id: 'orquestracao', label: 'Orquestração',   icon: <GitBranch size={16} />, count: agents.length   },
-    { id: 'pages',        label: 'Pages Builder',  icon: <Globe size={16} />,     count: 0               },
+    { id: 'usuarios', label: 'Usuários', icon: <Users size={16} />, count: users.length },
+    { id: 'apikeys', label: 'API Keys', icon: <Key size={16} />, count: apiKeys.length },
+    { id: 'orquestracao', label: 'Orquestração', icon: <GitBranch size={16} />, count: agents.length },
+    { id: 'pages', label: 'Pages Builder', icon: <Globe size={16} />, count: 0 },
   ];
 
   // ── Renderização ─────────────────────────────────────────────────────────────
@@ -762,8 +778,8 @@ export const AdminPage: React.FC = () => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-neutral-500 hover:text-neutral-300'
+                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                : 'text-neutral-500 hover:text-neutral-300'
                 }`}
             >
               {tab.icon}
@@ -1065,7 +1081,7 @@ export const AdminPage: React.FC = () => {
           </div>
         )}
 
-        {/* ── Tab: Pages Builder ─────────────────────────────────────────────── */}
+        {/* ── Tab: Pages Builder ───────────────────────────────────────────────────── */}
         {activeTab === 'pages' && (
           <div className="max-w-3xl space-y-6">
             {/* Header */}
@@ -1075,7 +1091,7 @@ export const AdminPage: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-base font-semibold text-white">Pages Builder — Configurações de IA</h2>
-                <p className="text-xs text-neutral-500">Modelos e prompts utilizados na criação de landing pages</p>
+                <p className="text-xs text-neutral-500">Modelos e prompts dos 3 agentes: Builder Criação, Builder Edição e Copywriter</p>
               </div>
             </div>
 
@@ -1085,16 +1101,17 @@ export const AdminPage: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-5">
-                {/* Modelo de criação */}
+
+                {/* ───── Modelo de Criação ───── */}
                 <div className="bg-[#0f0f0f] border border-neutral-900 rounded-xl p-5 space-y-4">
                   <div className="flex items-center gap-2 pb-3 border-b border-neutral-900">
                     <Cpu size={14} className="text-cyan-400" />
                     <span className="text-sm font-semibold text-white">Modelo de Criação</span>
-                    <span className="ml-auto text-[10px] text-neutral-600 bg-cyan-500/10 border border-cyan-500/20 text-cyan-500 px-2 py-0.5 rounded-full">Arcco Pages</span>
+                    <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-500">Arcco Pages</span>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
-                      Modelo OpenRouter <span className="normal-case font-normal text-neutral-700">(usado pelo agente Builder e Copywriter)</span>
+                      Modelo OpenRouter <span className="normal-case font-normal text-neutral-700">(usado ao criar páginas novas)</span>
                     </label>
                     <ModelDropdown
                       value={pagesModeloCriacao}
@@ -1105,11 +1122,32 @@ export const AdminPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* System Prompt do Builder */}
+                {/* ───── Modelo de Edição ───── */}
                 <div className="bg-[#0f0f0f] border border-neutral-900 rounded-xl p-5 space-y-4">
                   <div className="flex items-center gap-2 pb-3 border-b border-neutral-900">
-                    <FileText size={14} className="text-indigo-400" />
-                    <span className="text-sm font-semibold text-white">System Prompt — Agente Builder (AST)</span>
+                    <Wrench size={14} className="text-amber-400" />
+                    <span className="text-sm font-semibold text-white">Modelo de Edição</span>
+                    <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500">Modo Edição</span>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
+                      Modelo OpenRouter <span className="normal-case font-normal text-neutral-700">(usado ao editar páginas existentes)</span>
+                    </label>
+                    <ModelDropdown
+                      value={pagesModeloEdicao}
+                      models={orModels}
+                      loadingModels={modelsLoading}
+                      onChange={setPagesModeloEdicao}
+                    />
+                  </div>
+                </div>
+
+                {/* ───── Prompt Builder Criação (AST) ───── */}
+                <div className="bg-[#0f0f0f] border border-neutral-900 rounded-xl p-5 space-y-4">
+                  <div className="flex items-center gap-2 pb-3 border-b border-neutral-900">
+                    <Brain size={14} className="text-indigo-400" />
+                    <span className="text-sm font-semibold text-white">System Prompt — Agente Builder (Criação)</span>
+                    <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">AST + Code</span>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
@@ -1119,20 +1157,63 @@ export const AdminPage: React.FC = () => {
                       value={pagesPromptCriacao}
                       onChange={e => setPagesPromptCriacao(e.target.value)}
                       rows={12}
-                      placeholder="Deixe vazio para usar o prompt padrão do sistema..."
+                      placeholder="Deixe vazio para usar o prompt padrão do sistema (AST_BUILDER_SYSTEM_PROMPT ou DEFAULT_AGENT_PROMPT)..."
                       className="w-full bg-[#1a1a1a] border border-neutral-800 text-neutral-200 text-xs font-mono rounded-lg px-4 py-3 outline-none focus:border-indigo-500/50 transition-colors resize-y leading-relaxed"
                       spellCheck={false}
                     />
-                    <p className="text-xs text-neutral-700 mt-1">Se vazio, usa o <code className="text-neutral-500">AST_BUILDER_SYSTEM_PROMPT</code> definido em <code className="text-neutral-500">backend/api/builder.py</code></p>
+                    <p className="text-xs text-neutral-700 mt-1">Se vazio, usa <code className="text-neutral-500">AST_BUILDER_SYSTEM_PROMPT</code> (modo design) ou <code className="text-neutral-500">DEFAULT_AGENT_PROMPT</code> (modo code)</p>
                   </div>
                 </div>
 
-                {/* Prompt do Copywriter */}
+                {/* ───── Prompt Builder Edição ───── */}
+                <div className="bg-[#0f0f0f] border border-neutral-900 rounded-xl p-5 space-y-4">
+                  <div className="flex items-center gap-2 pb-3 border-b border-neutral-900">
+                    <Code2 size={14} className="text-amber-400" />
+                    <span className="text-sm font-semibold text-white">System Prompt — Agente Builder (Edição)</span>
+                    <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">Modo Edição</span>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
+                      Prompt de edição <span className="normal-case font-normal text-neutral-700">{pagesPromptEdicao.length} chars</span>
+                    </label>
+                    <textarea
+                      value={pagesPromptEdicao}
+                      onChange={e => setPagesPromptEdicao(e.target.value)}
+                      rows={12}
+                      placeholder="Deixe vazio para usar o DEFAULT_AGENT_PROMPT padrão..."
+                      className="w-full bg-[#1a1a1a] border border-neutral-800 text-neutral-200 text-xs font-mono rounded-lg px-4 py-3 outline-none focus:border-amber-500/50 transition-colors resize-y leading-relaxed"
+                      spellCheck={false}
+                    />
+                    <p className="text-xs text-neutral-700 mt-1">Usado quando o usuário modifica páginas existentes. Suporta <code className="text-neutral-500">replace_snippet</code> para edições cirurgicas.</p>
+                  </div>
+                </div>
+
+                {/* ───── Modelo do Copywriter ───── */}
+                <div className="bg-[#0f0f0f] border border-neutral-900 rounded-xl p-5 space-y-4">
+                  <div className="flex items-center gap-2 pb-3 border-b border-neutral-900">
+                    <PenTool size={14} className="text-pink-400" />
+                    <span className="text-sm font-semibold text-white">Modelo do Copywriter</span>
+                    <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-400">Copywriter</span>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
+                      Modelo OpenRouter <span className="normal-case font-normal text-neutral-700">(usado pelo agente Copywriter de textos persuasivos)</span>
+                    </label>
+                    <ModelDropdown
+                      value={pagesModeloCopywriter}
+                      models={orModels}
+                      loadingModels={modelsLoading}
+                      onChange={setPagesModeloCopywriter}
+                    />
+                  </div>
+                </div>
+
+                {/* ───── Prompt Copywriter ───── */}
                 <div className="bg-[#0f0f0f] border border-neutral-900 rounded-xl p-5 space-y-4">
                   <div className="flex items-center gap-2 pb-3 border-b border-neutral-900">
                     <PenTool size={14} className="text-pink-400" />
                     <span className="text-sm font-semibold text-white">System Prompt — Agente Copywriter</span>
-                    <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-400">Novo</span>
+                    <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-400">Copywriter</span>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
@@ -1142,13 +1223,61 @@ export const AdminPage: React.FC = () => {
                       value={pagesPromptCopywriter}
                       onChange={e => setPagesPromptCopywriter(e.target.value)}
                       rows={12}
-                      placeholder="Deixe vazio para usar o COPYWRITER_SYSTEM_PROMPT padrão do backend..."
+                      placeholder="Deixe vazio para usar o COPYWRITER_SYSTEM_PROMPT padrão..."
                       className="w-full bg-[#1a1a1a] border border-neutral-800 text-neutral-200 text-xs font-mono rounded-lg px-4 py-3 outline-none focus:border-pink-500/50 transition-colors resize-y leading-relaxed"
                       spellCheck={false}
                     />
                     <p className="text-xs text-neutral-700 mt-1">
                       O Copywriter é chamado automaticamente antes do Builder quando o usuário cria uma nova página em modo AST.
                       O texto gerado é injetado como contexto para o agente Builder.
+                    </p>
+                  </div>
+                </div>
+
+                {/* ───── Modelo do Roteador de Templates ───── */}
+                <div className="bg-[#0f0f0f] border border-neutral-900 rounded-xl p-5 space-y-4">
+                  <div className="flex items-center gap-2 pb-3 border-b border-neutral-900">
+                    <Globe size={14} className="text-emerald-400" />
+                    <span className="text-sm font-semibold text-white">Modelo de Roteamento (Templates)</span>
+                    <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">Roteador</span>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
+                      Modelo OpenRouter <span className="normal-case font-normal text-neutral-700">(usado para selecionar o melhor template base)</span>
+                    </label>
+                    <ModelDropdown
+                      value={pagesModeloRoteamento}
+                      models={orModels}
+                      loadingModels={modelsLoading}
+                      onChange={setPagesModeloRoteamento}
+                    />
+                    <p className="text-xs text-neutral-700 mt-1">
+                      Recomendado: Modelos rápidos e baratos como <code className="text-neutral-500">google/gemini-2.5-flash</code>.
+                    </p>
+                  </div>
+                </div>
+
+                {/* ───── Prompt Roteador ───── */}
+                <div className="bg-[#0f0f0f] border border-neutral-900 rounded-xl p-5 space-y-4">
+                  <div className="flex items-center gap-2 pb-3 border-b border-neutral-900">
+                    <Globe size={14} className="text-emerald-400" />
+                    <span className="text-sm font-semibold text-white">System Prompt — Agente Roteador</span>
+                    <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">Roteador</span>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
+                      Prompt de Roteamento <span className="normal-case font-normal text-neutral-700">{pagesPromptRoteamento.length} chars</span>
+                    </label>
+                    <textarea
+                      value={pagesPromptRoteamento}
+                      onChange={e => setPagesPromptRoteamento(e.target.value)}
+                      rows={8}
+                      placeholder="Deixe vazio para usar o prompt de roteamento padrão..."
+                      className="w-full bg-[#1a1a1a] border border-neutral-800 text-neutral-200 text-xs font-mono rounded-lg px-4 py-3 outline-none focus:border-emerald-500/50 transition-colors resize-y leading-relaxed"
+                      spellCheck={false}
+                    />
+                    <p className="text-xs text-neutral-700 mt-1">
+                      Este agente analisa a requisição do usuário e envia apenas o ID do template.
                     </p>
                   </div>
                 </div>

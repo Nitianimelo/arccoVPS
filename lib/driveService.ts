@@ -13,6 +13,10 @@ export interface UserFile {
 
 export const driveService = {
 
+    async getUser() {
+        return await supabase.auth.getUser();
+    },
+
     // List all files for current user
     async listFiles(userId: string) {
         if (!userId) throw new Error("User ID is required to list files");

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Converta + - Capture Leads</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00ff88;
+            --secondary: #0a0a0a;
+            --accent: #00d4ff;
+            --dark: #111111;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--secondary); }
+        .neon-glow { box-shadow: 0 0 40px rgba(0, 255, 136, 0.3); }
+        .neon-glow-accent { box-shadow: 0 0 40px rgba(0, 212, 255, 0.3); }
+        .glass-dark {
+            background: rgba(17, 17, 17, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 255, 136, 0.1);
+        }
+        .neon-input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            transition: all 0.3s ease;
+        }
+        .neon-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+            outline: none;
+        }
+        .neon-btn {
+            background: linear-gradient(135deg, var(--primary), #00cc6a);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .neon-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s;
+        }
+        .neon-btn:hover::before { left: 100%; }
+        .neon-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 0 50px rgba(0, 255, 136, 0.5);
+        }
+        @keyframes pulse-neon {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+        .pulse-neon { animation: pulse-neon 3s ease-in-out infinite; }
+        @keyframes float-form {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .float-form { animation: float-form 6s ease-in-out infinite; }
+        @keyframes slide-in {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .slide-in { animation: slide-in 0.6s ease-out forwards; }
+        .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+        .grid-bg {
+            background-image:
+                linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+        .feature-icon { transition: all 0.4s ease; }
+        .feature-card:hover .feature-icon {
+            transform: scale(1.2) rotate(10deg);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+        }
+        .stat-number { font-variant-numeric: tabular-nums; }
+    </style>
+</head>
+<body class="text-white min-h-screen overflow-x-hidden grid-bg">
+    <!-- Background Elements -->
+    <div class="fixed inset-0 pointer-events-none z-0">
+        <div class="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-[#00ff88] rounded-full blur-[150px] opacity-10 pulse-neon"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-[#00d4ff] rounded-full blur-[150px] opacity-10 pulse-neon" style="animation-delay: 1.5s;"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-dark">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00ff88] to-[#00cc6a] flex items-center justify-center neon-glow">
+                    <i data-lucide="zap" class="w-5 h-5 text-black"></i>
+                </div>
+                <span class="font-bold text-xl tracking-tight">Converte+</span>
+            </div>
+            <a href="#" class="text-gray-400 hover:text-[#00ff88] transition-colors text-sm">Já tem conta? Entrar</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center pt-24 relative">
+        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+            <div class="space-y-8">
+                <div class="inline-flex items-center gap-2 bg-[#00ff88]/10 px-4 py-2 rounded-full border border-[#00ff88]/20 slide-in">
+                    <span class="w-2 h-2 bg-[#00ff88] rounded-full animate-pulse"></span>
+                    <span class="text-sm font-medium text-[#00ff88]">+50.000 leads capturados</span>
+                </div>
+                <h1 class="text-5xl md:text-7xl font-black leading-tight slide-in" style="animation-delay: 0.1s;">
+                    Transforme
+                    <span class="text-[#00ff88] block">Visitantes</span>
+                    em
+                    <span class="text-[#00d4ff]">Clientes</span>
+                </h1>
+                <p class="text-xl text-gray-400 leading-relaxed slide-in" style="animation-delay: 0.2s;">
+                    Capture leads de alta qualidade com formulários inteligentes. Aumente sua conversão em até 300%.
+                </p>
+                <div class="flex flex-wrap gap-6 pt-4 slide-in" style="animation-delay: 0.3s;">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-5 h-5 text-[#00ff88]"></i>
+                        <span class="text-sm text-gray-400">Setup em 2 minutos</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-5 h-5 text-[#00ff88]"></i>
+                        <span class="text-sm text-gray-400">Integração fácil</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-5 h-5 text-[#00ff88]"></i>
+                        <span class="text-sm text-gray-400">Analytics completo</span>
+                    </div>
+                </div>
+            </div>
+            <div class="relative float-form">
+                <div class="glass-dark rounded-3xl p-8 neon-glow">
+                    <h3 class="text-2xl font-bold mb-6 text-center">Comece Grátis</h3>
+                    <form class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">Nome Completo</label>
+                            <input type="text" class="neon-input w-full px-5 py-4 rounded-xl text-white placeholder-gray-600" placeholder="Seu nome">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">E-mail Corporativo</label>
+                            <input type="email" class="neon-input w-full px-5 py-4 rounded-xl text-white placeholder-gray-600" placeholder="seu@email.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">Nome da Empresa</label>
+                            <input type="text" class="neon-input w-full px-5 py-4 rounded-xl text-white placeholder-gray-600" placeholder="Minha Empresa Ltda">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">Site da Empresa</label>
+                            <input type="url" class="neon-input w-full px-5 py-4 rounded-xl text-white placeholder-gray-600" placeholder="https://minhaempresa.com">
+                        </div>
+                        <button type="submit" class="neon-btn w-full py-4 rounded-xl text-black font-bold text-lg flex items-center justify-center gap-2">
+                            Criar Conta Grátis
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </button>
+                    </form>
+                    <p class="text-center text-xs text-gray-500 mt-6">
+                        Ao se cadastrar, você concorda com nossos <a href="#" class="text-[#00ff88] hover:underline">Termos de Uso</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="py-24">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16 reveal">
+                <p class="text-sm font-bold tracking-widest text-[#00ff88] uppercase mb-3">Recursos</p>
+                <h2 class="text-4xl md:text-5xl font-black">Por que <span class="text-[#00d4ff]">Converte+?</span></h2>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass-dark rounded-2xl p-8 feature-card reveal">
+                    <div class="feature-icon w-16 h-16 rounded-2xl bg-[#00ff88]/10 flex items-center justify-center mb-6 border border-[#00ff88]/20">
+                        <i data-lucide="target" class="w-8 h-8 text-[#00ff88]"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Captura Inteligente</h3>
+                    <p class="text-gray-400">Algoritmos que identificam leads de alta qualidade e segmentam automaticamente.</p>
+                </div>
+                <div class="glass-dark rounded-2xl p-8 feature-card reveal" style="transition-delay: 0.1s;">
+                    <div class="feature-icon w-16 h-16 rounded-2xl bg-[#00d4ff]/10 flex items-center justify-center mb-6 border border-[#00d4ff]/20">
+                        <i data-lucide="bar-chart-3" class="w-8 h-8 text-[#00d4ff]"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Analytics em Tempo Real</h3>
+                    <p class="text-gray-400">Dashboards interativos com métricas de conversão e comportamento do usuário.</p>
+                </div>
+                <div class="glass-dark rounded-2xl p-8 feature-card reveal" style="transition-delay: 0.2s;">
+                    <div class="feature-icon w-16 h-16 rounded-2xl bg-[#00ff88]/10 flex items-center justify-center mb-6 border border-[#00ff88]/20">
+                        <i data-lucide="zap" class="w-8 h-8 text-[#00ff88]"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Integração Instantânea</h3>
+                    <p class="text-gray-400">Conecte com CRM, email marketing e 50+ ferramentas em segundos.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="py-24">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="glass-dark rounded-3xl p-12 neon-glow-accent reveal">
+                <div class="grid md:grid-cols-4 gap-8 text-center">
+                    <div>
+                        <p class="text-5xl font-black text-[#00ff88] stat-number" data-target="50">0</p>
+                        <p class="text-sm text-gray-400 mt-2">Mil Leads/Mês</p>
+                    </div>
+                    <div>
+                        <p class="text-5xl font-black text-[#00d4ff] stat-number" data-target="300">0</p>
+                        <p class="text-sm text-gray-400 mt-2">% Aumento Conversão</p>
+                    </div>
+                    <div>
+                        <p class="text-5xl font-black text-[#00ff88] stat-number" data-target="5000">0</p>
+                        <p class="text-sm text-gray-400 mt-2">Empresas Ativas</p>
+                    </div>
+                    <div>
+                        <p class="text-5xl font-black text-[#00d4ff] stat-number" data-target="99">0</p>
+                        <p class="text-sm text-gray-400 mt-2">% Satisfação</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-24">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="glass-dark rounded-3xl p-12 text-center border border-[#00ff88]/20 reveal">
+                <h2 class="text-4xl md:text-5xl font-black mb-6">Pronto para <span class="text-[#00ff88]">crescer?</span></h2>
+                <p class="text-xl text-gray-400 mb-8">Comece a capturar leads de alta qualidade hoje mesmo. Sem cartão de crédito.</p>
+                <button class="neon-btn px-10 py-4 rounded-xl text-black font-bold text-lg flex items-center gap-2 mx-auto">
+                    Começar Agora
+                    <i data-lucide="rocket" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="glass-dark py-8 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <p class="text-gray-500 text-sm">© 2024 Converte+. Capture mais, venda mais.</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Counter Animation
+        const counters = document.querySelectorAll('.stat-number');
+        const animateCounter = (counter) => {
+            const target = parseInt(counter.dataset.target);
+            const duration = 2000;
+            const increment = target / (duration / 16);
+            let current = 0;
+            const update = () => {
+                current += increment;
+                if (current < target) {
+                    counter.textContent = Math.floor(current);
+                    requestAnimationFrame(update);
+                } else {
+                    counter.textContent = target;
+                }
+            };
+            update();
+        };
+
+        const counterObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateCounter(entry.target);
+                    counterObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        counters.forEach(counter => counterObserver.observe(counter));
+
+        // Reveal on scroll
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealOnScroll = () => {
+            revealElements.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                const windowHeight = window.innerHeight;
+                if (rect.top < windowHeight * 0.85) {
+                    el.classList.add('active');
+                }
+            });
+        };
+        window.addEventListener('scroll', revealOnScroll);
+        revealOnScroll();
+    </script>
+</body>
+</html>

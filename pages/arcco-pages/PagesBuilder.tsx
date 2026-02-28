@@ -31,12 +31,16 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { openRouterService } from '../../lib/openrouter';
+import { pexelsService } from '../../lib/pexels';
 import { supabase } from '../../lib/supabase';
 import { PageAST, SectionType, SectionNode } from './types/ast';
 import { ASTRenderer } from './renderer/ASTRenderer';
 import { PropertyPanel } from './editor/PropertyPanel';
 import { ThemePanel } from './editor/ThemePanel';
 import { compileAstToHtml } from './compiler/astCompiler';
+import { AVAILABLE_TEMPLATES, getTemplateHtml } from './templates';
+import { iframeEditorScript } from './editor/iframeInjector';
+import { VisualEditorPanel } from './editor/VisualEditorPanel';
 
 interface PagesBuilderProps {
   userEmail: string;
@@ -76,7 +80,10 @@ interface PagesConfig {
   system_prompt_criacao: string;
   modelo_edicao: string;
   system_prompt_edicao: string;
+  modelo_copywriter?: string;
   prompt_copywriter?: string;
+  modelo_roteamento?: string;
+  prompt_roteamento?: string;
 }
 
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
@@ -95,122 +102,16 @@ const DEFAULT_HTML_CONTENT = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arcco Future</title>
+    <title>Arcco Pages</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
       body { font-family: 'Inter', sans-serif; }
-      .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-      .gradient-text { background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-      .blob { filter: blur(80px); opacity: 0.4; }
     </style>
 </head>
-<body class="bg-[#050505] text-white overflow-x-hidden antialiased selection:bg-indigo-500 selection:text-white">
-
-    <!-- Background Elements -->
-    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10">
-        <div class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600 rounded-full blob animate-pulse"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600 rounded-full blob animate-pulse" style="animation-duration: 5s;"></div>
-    </div>
-
-    <!-- Navbar -->
-    <nav class="fixed w-full z-50 transition-all duration-300 border-b border-white/5 bg-[#050505]/80 backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <i data-lucide="zap" class="text-indigo-500 w-6 h-6"></i>
-                <span class="font-bold text-xl tracking-tight">Arcco<span class="text-indigo-500">.pages</span></span>
-            </div>
-            <div class="hidden md:flex items-center gap-8">
-                <a href="#features" class="text-sm font-medium text-neutral-400 hover:text-white transition-colors">Funcionalidades</a>
-                <a href="#pricing" class="text-sm font-medium text-neutral-400 hover:text-white transition-colors">Planos</a>
-                <a href="#about" class="text-sm font-medium text-neutral-400 hover:text-white transition-colors">Sobre</a>
-            </div>
-            <button class="px-5 py-2.5 bg-white text-black text-sm font-bold rounded-full hover:bg-neutral-200 transition-all transform hover:scale-105 active:scale-95">
-                Começar Agora
-            </button>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <section class="min-h-screen flex items-center justify-center pt-20 relative">
-        <div class="max-w-5xl mx-auto px-6 text-center">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-xs font-medium mb-8 animate-fade-in-up">
-                <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                Nova Era do Design Digital
-            </div>
-            
-            <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
-                Crie experiências <br />
-                <span class="gradient-text">extraordinárias</span> em segundos
-            </h1>
-            
-            <p class="text-lg md:text-xl text-neutral-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-                A plataforma mais avançada para construir landing pages de alta conversão. Design premium, código limpo e performance incomparável.
-            </p>
-            
-            <div class="flex flex-col md:flex-row items-center justify-center gap-4">
-                <button class="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-lg transition-all shadow-lg shadow-indigo-600/20 w-full md:w-auto flex items-center justify-center gap-2 group">
-                    Iniciar Projeto 
-                    <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
-                </button>
-                <button class="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-bold text-lg transition-all backdrop-blur-sm w-full md:w-auto">
-                    Ver Demo
-                </button>
-            </div>
-
-            <!-- Dashboard Preview -->
-            <div class="mt-20 relative rounded-2xl border border-white/10 bg-[#0A0A0A] shadow-2xl overflow-hidden glass transform rotate-x-12 perspective-1000 group">
-                <div class="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent z-10"></div>
-                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop" alt="Dashboard" class="w-full opacity-60 group-hover:scale-105 transition-transform duration-700">
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Grid -->
-    <section id="features" class="py-32 bg-[#050505] relative">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Card 1 -->
-                <div class="p-8 rounded-3xl bg-[#0A0A0A] border border-white/5 hover:border-indigo-500/30 transition-all group hover:-translate-y-2">
-                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-6 text-indigo-400 group-hover:scale-110 transition-transform">
-                        <i data-lucide="rocket" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">Ultra Performance</h3>
-                    <p class="text-neutral-400 leading-relaxed">Carregamento instantâneo, otimizado para Core Web Vitals e SEO técnico.</p>
-                </div>
-
-                <!-- Card 2 -->
-                <div class="p-8 rounded-3xl bg-[#0A0A0A] border border-white/5 hover:border-purple-500/30 transition-all group hover:-translate-y-2">
-                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-6 text-purple-400 group-hover:scale-110 transition-transform">
-                        <i data-lucide="palette" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">Design System</h3>
-                    <p class="text-neutral-400 leading-relaxed">Componentes pré-construídos que mantêm consistência visual em toda sua aplicação.</p>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="p-8 rounded-3xl bg-[#0A0A0A] border border-white/5 hover:border-pink-500/30 transition-all group hover:-translate-y-2">
-                    <div class="w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center mb-6 text-pink-400 group-hover:scale-110 transition-transform">
-                        <i data-lucide="code-2" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">Código Limpo</h3>
-                    <p class="text-neutral-400 leading-relaxed">Exportação de código sem dependências obscuras, pronto para deploy.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="py-12 border-t border-white/5 mt-20">
-        <div class="max-w-7xl mx-auto px-6 text-center text-neutral-500 text-sm">
-            <p>&copy; 2024 Arcco Inc. Future Design.</p>
-        </div>
-    </footer>
-
-    <script>
-        lucide.createIcons();
-    </script>
+<body class="bg-white text-black overflow-x-hidden antialiased">
+    <!-- O agente irá gerar o conteúdo aqui -->
 </body>
 </html>`;
 
@@ -245,9 +146,11 @@ const DEFAULT_FILES: ProjectFile[] = [
 
 // --- Agent Action Types ---
 interface AgentFileAction {
-  type: 'create' | 'update' | 'delete';
+  type: 'create' | 'update' | 'delete' | 'replace_snippet';
   file_path: string;
   content?: string;
+  search?: string;
+  replace?: string;
 }
 
 interface AgentASTAction {
@@ -291,13 +194,15 @@ const DEFAULT_AGENT_PROMPT = `Você é um engenheiro frontend especialista em cr
 Você trabalha com aplicações web multi-arquivo (HTML, CSS, JavaScript).
 
 ## Regras
-- Retorne o conteúdo COMPLETO de cada arquivo, nunca diffs ou patches.
+- Para CRIAÇÃO ou reescrita total, use "type": "update" com o conteúdo COMPLETO do arquivo.
+- Para EDIÇÕES PEQUENAS (trocar cor, texto, classe, atributo), use "type": "replace_snippet" — é mais rápido e econômico.
 - Só modifique/crie arquivos que realmente precisem de mudanças.
 - Use Tailwind CSS via CDN no HTML para estilização.
 - Use fontes modernas do Google Fonts (Inter, Poppins, etc).
 - Use ícones do FontAwesome ou Lucide (via CDN).
 - Crie layouts visualmente impactantes, com seções claras (Hero, Benefícios, Prova Social, CTA).
-- Use imagens de placeholder do Unsplash (source.unsplash.com) se necessário.
+- Para imagens, USE AS URLs DO PEXELS fornecidas no contexto (se disponíveis). NÃO use source.unsplash.com.
+- Se não houver URLs do Pexels no contexto, use https://images.pexels.com/photos/ como base.
 - Sempre retorne código válido e funcional.
 - Se o usuário pedir algo vago, use seu julgamento de design.
 
@@ -307,28 +212,30 @@ Você trabalha com aplicações web multi-arquivo (HTML, CSS, JavaScript).
 Responda APENAS com texto simples (sem JSON, sem código).
 
 ### Se for gerar/modificar código:
-Retorne APENAS um objeto JSON puro com esta estrutura EXATA:
+Retorne APENAS um objeto JSON puro com esta estrutura:
 
+#### Criação / Reescrita completa:
 {
   "actions": [
-    {
-      "type": "update",
-      "file_path": "index.html",
-      "content": "<!DOCTYPE html>\\\\n<html>\\\\n<head>...</head>\\\\n<body>...</body>\\\\n</html>"
-    },
-    {
-      "type": "update",
-      "file_path": "style.css",
-      "content": "body { margin: 0; }"
-    }
+    { "type": "update", "file_path": "index.html", "content": "<!DOCTYPE html>..." }
   ],
-  "explanation": "Criei uma landing page moderna com Tailwind CSS"
+  "explanation": "Criei a landing page."
+}
+
+#### Edição cirurgica (trocar trechos):
+{
+  "actions": [
+    { "type": "replace_snippet", "file_path": "index.html", "search": "class=\\"bg-blue-500\\"", "replace": "class=\\"bg-red-500\\"" },
+    { "type": "replace_snippet", "file_path": "index.html", "search": "Texto Antigo", "replace": "Texto Novo" }
+  ],
+  "explanation": "Troquei a cor do botão e o texto do hero."
 }
 
 CRÍTICO:
 - A chave DEVE ser "actions" (array de objetos)
-- Cada ação DEVE ter: "type", "file_path", "content"
-- NÃO use formato {"index.html": "...", "style.css": "..."} - isso está ERRADO
+- Cada ação DEVE ter: "type", "file_path" e ("content" OU "search"+"replace")
+- PREFIRA "replace_snippet" para edições pontuais (menos tokens, mais rápido)
+- Use "update" apenas quando o arquivo precisar ser reescrito por completo
 - NÃO envolva o JSON em blocos de código markdown (\`\`\`json)
 - Retorne SOMENTE o JSON puro, sem texto antes ou depois`;
 
@@ -574,6 +481,14 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
     if (!htmlFile) return '<h1>Erro: index.html não encontrado</h1>';
 
     let html = htmlFile.content;
+
+    // Trava de segurança: garante estrutura HTML + Tailwind + Lucide
+    if (!html.toLowerCase().includes('<html') && !html.toLowerCase().includes('<!doctype')) {
+      html = `<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<script src="https://cdn.tailwindcss.com"></script>\n<script src="https://unpkg.com/lucide@latest"></script>\n<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">\n<style>body { font-family: 'Inter', sans-serif; }</style>\n</head>\n<body>\n${html}\n</body>\n</html>`;
+    } else if (!html.includes('tailwindcss')) {
+      html = html.replace('</head>', `<script src="https://cdn.tailwindcss.com"></script>\n<script src="https://unpkg.com/lucide@latest"></script>\n</head>`);
+    }
+
     const cssContent = cssFiles.map(f => f.content).join('\n');
     if (cssContent) {
       if (html.includes('</head>')) {
@@ -583,14 +498,18 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
       }
     }
     const jsContent = jsFiles.map(f => f.content).join('\n');
-    if (jsContent) {
-      if (html.includes('</body>')) {
-        html = html.replace('</body>', `<script>\n${jsContent}\n</script>\n</body>`);
+    let injectedHtml = html;
+
+    // Inject custom js
+    if (jsContent || iframeEditorScript) {
+      const allScript = [jsContent, iframeEditorScript].filter(Boolean).join('\n\n');
+      if (injectedHtml.includes('</body>')) {
+        injectedHtml = injectedHtml.replace('</body>', `\n<script>\n${allScript}\n</script>\n</body>`);
       } else {
-        html += `<script>\n${jsContent}\n</script>`;
+        injectedHtml += `\n<script>\n${allScript}\n</script>`;
       }
     }
-    return html;
+    return injectedHtml;
   }, [files]);
 
   // Helper getters
@@ -625,9 +544,10 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
   const [apiConfigured, setApiConfigured] = useState(false);
   const [pagesConfig, setPagesConfig] = useState<PagesConfig>({
     modelo_criacao: 'anthropic/claude-3.5-sonnet',
-    system_prompt_criacao: DEFAULT_AGENT_PROMPT,
+    system_prompt_criacao: '',
     modelo_edicao: 'anthropic/claude-3.5-sonnet',
-    system_prompt_edicao: DEFAULT_AGENT_PROMPT
+    system_prompt_edicao: '',
+    modelo_copywriter: 'anthropic/claude-3.5-sonnet',
   });
 
   // AST State (Phase 2)
@@ -636,6 +556,43 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
 
   // Phase 3: Visual Editor State
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  const [selectedVisualElement, setSelectedVisualElement] = useState<any | null>(null);
+
+  // --- Visual Editor Listeners (Iframe) ---
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Validate origin if needed (currently running on same origin usually)
+      const { type, payload } = event.data;
+      if (type === 'ELEMENT_SELECTED') {
+        setSelectedVisualElement(payload);
+      } else if (type === 'ELEMENT_DESELECTED') {
+        setSelectedVisualElement(null);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  const handleUpdateVisualElement = (payload: any) => {
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      // Send update command back to the iframe
+      iframeRef.current.contentWindow.postMessage({
+        type: 'UPDATE_ELEMENT',
+        payload
+      }, '*');
+
+      // Update local state proactively for immediate feedback
+      setSelectedVisualElement((prev: any) => prev ? { ...prev, ...payload } : null);
+    }
+  };
+
+  const handleCloseVisualEditor = () => {
+    setSelectedVisualElement(null);
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({ type: 'DESELECT_ALL' }, '*');
+    }
+  };
 
   const handleSelectSection = (id: string) => {
     setSelectedSectionId(id);
@@ -765,6 +722,7 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
           system_prompt_criacao: configData.system_prompt_criacao || '',
           modelo_edicao: configData.modelo_edicao || 'anthropic/claude-3.5-sonnet',
           system_prompt_edicao: configData.system_prompt_edicao || '',
+          modelo_copywriter: configData.modelo_copywriter || 'anthropic/claude-3.5-sonnet',
           prompt_copywriter: configData.prompt_copywriter || undefined,
         });
       }
@@ -888,6 +846,13 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
 
     let bundledHtml = htmlFile.content;
 
+    // Trava de segurança: garante estrutura HTML + Tailwind + Lucide
+    if (!bundledHtml.toLowerCase().includes('<html') && !bundledHtml.toLowerCase().includes('<!doctype')) {
+      bundledHtml = `<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<script src="https://cdn.tailwindcss.com"></script>\n<script src="https://unpkg.com/lucide@latest"></script>\n<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">\n<style>body { font-family: 'Inter', sans-serif; }</style>\n</head>\n<body>\n${bundledHtml}\n</body>\n</html>`;
+    } else if (!bundledHtml.includes('tailwindcss')) {
+      bundledHtml = bundledHtml.replace('</head>', `<script src="https://cdn.tailwindcss.com"></script>\n<script src="https://unpkg.com/lucide@latest"></script>\n</head>`);
+    }
+
     // Inject CSS
     const cssContent = cssFiles.map(f => f.content).join('\n');
     if (cssContent) {
@@ -1001,6 +966,15 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
           }
         } else if (action.type === 'update') {
           updateFileContent(fileName, action.content || '');
+        } else if (action.type === 'replace_snippet') {
+          if (action.search && action.replace !== undefined) {
+            setFiles(prev => prev.map(f => {
+              if (f.name === fileName && f.content.includes(action.search!)) {
+                return { ...f, content: f.content.replace(action.search!, action.replace!) };
+              }
+              return f;
+            }));
+          }
         } else if (action.type === 'delete') {
           if (fileName !== 'index.html') {
             setFiles(prev => prev.filter(f => f.name !== fileName));
@@ -1158,7 +1132,52 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
     try {
       // ── MODO PREVIEW: Aplica código no preview ─────────────────────────
       if (chatMode === 'preview') {
-        const analyzeStep = addAgentStep('Analisando solicitação...');
+        const analyzeStep = addAgentStep('Analisando solicitação e template base...');
+
+        // ── Seleção Inteligente de Template (Routing) ───────────────────────
+        let selectedTemplateHtml = '';
+        let selectedTemplateId = '';
+
+        if (agentMode === 'creation' && renderMode === 'iframe') {
+          try {
+            const templateContext = AVAILABLE_TEMPLATES.map(t =>
+              `[ID: ${t.id}] - Nome: ${t.name} - Keywords: ${t.keywords.join(', ')}`
+            ).join('\n');
+
+            const defaultRoutingPrompt = `Você é um roteador de templates altamente eficiente.
+Sua única função é ler o pedido do usuário e escolher o ID do template que melhor se encaixa no pedido.
+Os templates disponíveis são:
+${templateContext}
+
+Retorne APENAS o ID do template escolhido (ex: 01-clinica-estetica). Se nenhum encaixar bem, retorne "10-health-wellness" como fallback padrão. NADA de texto extra, apenas o ID exato.`;
+
+            const routingSystemPrompt = pagesConfig.prompt_roteamento
+              ? pagesConfig.prompt_roteamento.replace('{{templateContext}}', templateContext)
+              : defaultRoutingPrompt;
+
+            const routerResult = await openRouterService.chat({
+              model: pagesConfig.modelo_roteamento || 'google/gemini-2.5-flash',
+              messages: [
+                { role: 'system', content: routingSystemPrompt },
+                { role: 'user', content: userMessage },
+              ],
+              max_tokens: 20,
+              temperature: 0,
+            });
+
+            selectedTemplateId = (routerResult.choices[0]?.message?.content || '').trim().replace(/[^a-zA-Z0-9-]/g, '');
+
+            if (selectedTemplateId) {
+              console.log('[Routing Agent] Templete selecionado:', selectedTemplateId);
+              const htmlContent = await getTemplateHtml(selectedTemplateId);
+              if (htmlContent) {
+                selectedTemplateHtml = htmlContent;
+              }
+            }
+          } catch (e) {
+            console.warn('[Routing Agent] Falha ao selecionar template, seguindo sem template base:', e);
+          }
+        }
 
         let copywriterContext = '';
         if (renderMode === 'ast' && agentMode === 'creation') {
@@ -1167,7 +1186,7 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
           try {
             const copywriterPrompt = pagesConfig.prompt_copywriter || COPYWRITER_SYSTEM_PROMPT;
             const copyResult = await openRouterService.chat({
-              model: pagesConfig.modelo_criacao || 'anthropic/claude-3.5-sonnet',
+              model: pagesConfig.modelo_copywriter || pagesConfig.modelo_criacao || 'anthropic/claude-3.5-sonnet',
               messages: [
                 { role: 'system', content: copywriterPrompt },
                 { role: 'user', content: userMessage },
@@ -1190,14 +1209,69 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
           updateAgentStep(analyzeStep, { status: 'done', text: 'Solicitação analisada' });
         }
 
+        // ── Pexels: busca imagens relevantes ───────────────────────────────────
+        let pexelsContext = '';
+        if (agentMode === 'creation') {
+          const pexelsStep = addAgentStep('Buscando imagens no Pexels...');
+          try {
+            // Extrai palavras-chave do pedido do usuário para buscar imagens relevantes
+            const keywords = userMessage
+              .replace(/[^a-zA-Zà-ú\s]/g, '')
+              .split(/\s+/)
+              .filter(w => w.length > 3)
+              .slice(0, 3)
+              .join(' ');
+
+            const searchTerm = keywords || 'modern business';
+            const queries: Record<string, string> = {
+              hero: `${searchTerm} professional`,
+              feature: `${searchTerm} technology`,
+              team: 'professional team office',
+              background: `${searchTerm} abstract`,
+            };
+
+            const imageUrls = await pexelsService.searchMultiple(queries, 'landscape');
+            if (Object.keys(imageUrls).length > 0) {
+              pexelsContext = Object.entries(imageUrls)
+                .map(([key, url]) => `- ${key}: ${url}`)
+                .join('\n');
+              updateAgentStep(pexelsStep, { status: 'done', text: `${Object.keys(imageUrls).length} imagens encontradas` });
+            } else {
+              updateAgentStep(pexelsStep, { status: 'done', text: 'Nenhuma imagem encontrada' });
+            }
+          } catch (e) {
+            console.warn('[Pexels] Falha ao buscar imagens:', e);
+            updateAgentStep(pexelsStep, { status: 'error', text: 'Pexels falhou' });
+          }
+        }
+
         const architectStep = addAgentStep('Arquiteto montando estrutura...');
 
-        const finalMessages = copywriterContext
+        // Injeta contexto do Copywriter + Pexels na mensagem do usuário
+        let enrichedContext = '';
+        if (copywriterContext) {
+          enrichedContext += `\n\n---\n[CONTEXTO DO COPYWRITER — use estes textos nos blocos da página]\n${copywriterContext}`;
+        }
+        if (pexelsContext) {
+          enrichedContext += `\n\n---\n[IMAGENS PEXELS — use estas URLs reais nas tags <img>. NÃO use source.unsplash.com]\n${pexelsContext}`;
+        }
+        if (selectedTemplateHtml) {
+          enrichedContext += `\n\n---\n[TEMPLATE HTML BASE]
+O usuário quer uma landing page profissional. Tome este código HTML abaixo como o SEU ESQUELETO DE BASE ABSOLUTA.
+Regras OBRIGATÓRIAS:
+1. MANTENHA 100% da estrutura, tags HTML, classes do TailwindCSS, tags <style>, animações CSS e links externos do head originais fornecidos.
+2. SUA ÚNICA FUNÇÃO é SUBSTITUIR APENAS E EXCLUSIVAMENTE os textos (títulos, parágrafos, botões) e as imagens (links <img> e de CSS background) usando o que o usuário pediu e o contexto do pexels/copywriter acima. Nada mais.
+3. Não remova as fontes (ex: Playfair Display) do <style> nem os ícones lucide.
+4. O resultado final deve ser o HTML inteiro da página editada pronta para rodar no Iframe, mantendo todo o estilo visual estético Premium do template base!
+\n\`\`\`html\n${selectedTemplateHtml}\n\`\`\`\n`;
+        }
+
+        const finalMessages = enrichedContext
           ? [
             ...backendMessages.slice(0, -1),
             {
               role: 'user' as const,
-              content: `${userMessage}\n\n---\n[CONTEXTO DO COPYWRITER — use estes textos nos blocos da página]\n${copywriterContext}`
+              content: `${userMessage}${enrichedContext}`
             }
           ]
           : backendMessages;
@@ -1227,7 +1301,7 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
         try {
           await openRouterService.streamChat(
             {
-              model: pagesConfig.modelo_criacao || 'anthropic/claude-3.5-sonnet',
+              model: (agentMode === 'editing' ? pagesConfig.modelo_edicao : pagesConfig.modelo_criacao) || 'anthropic/claude-3.5-sonnet',
               messages: allMessages,
               max_tokens: 16000,
               temperature: 0.7,
@@ -1338,7 +1412,7 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
         try {
           await openRouterService.streamChat(
             {
-              model: pagesConfig.modelo_criacao || 'anthropic/claude-3.5-sonnet',
+              model: pagesConfig.modelo_edicao || 'anthropic/claude-3.5-sonnet',
               messages: allMessages,
               max_tokens: 4000,
               temperature: 0.7,
@@ -1391,18 +1465,49 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
 
     setIsSaving(true);
     try {
-      // Create bundle for 'codepages' column (backward compatibility & publishing).
-      // Em modo AST, compila o AST para HTML estático via astCompiler.
-      const bundledHtml = (renderMode === 'ast' && pageState)
-        ? compileAstToHtml(pageState)
-        : bundleProject(files);
+      let finalHtml = '';
+      let currentFiles = [...files];
+
+      // Extract raw DOM if visual editing
+      if (renderMode === 'iframe' && iframeRef.current?.contentDocument) {
+        const doc = iframeRef.current.contentDocument;
+
+        // Remove editor injected styles and selection outlines
+        const styles = doc.querySelectorAll('style');
+        if (styles.length > 0) {
+          const lastStyle = styles[styles.length - 1];
+          if (lastStyle.textContent?.includes('arcco-hover-outline')) {
+            lastStyle.remove();
+          }
+        }
+        doc.querySelectorAll('.arcco-hover-outline').forEach(el => el.classList.remove('arcco-hover-outline'));
+        doc.querySelectorAll('.arcco-selected-outline').forEach(el => el.classList.remove('arcco-selected-outline'));
+
+        const innerBody = doc.body.innerHTML;
+        const oldHtml = bundleProject(files);
+
+        // Repackage HTML without the injector
+        const bodyMatch = oldHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+        if (bodyMatch) {
+          finalHtml = oldHtml.replace(bodyMatch[1], innerBody);
+          currentFiles = currentFiles.map(f => f.name === 'index.html' ? { ...f, content: finalHtml } : f);
+          setFiles(currentFiles);
+        } else {
+          finalHtml = oldHtml;
+        }
+      } else if (renderMode === 'ast' && pageState) {
+        finalHtml = compileAstToHtml(pageState);
+      } else {
+        finalHtml = bundleProject(files);
+      }
+
       const currentTimestamp = new Date().toISOString();
 
       let savedPage: SavedPage | null = null;
       const pageData = {
         nome: pageName,
-        codepages: bundledHtml, // Use the fresh bundle
-        source_files: files,    // Save source files JSON
+        codepages: finalHtml,
+        source_files: currentFiles,
         updated_at: currentTimestamp
       };
 
@@ -2280,139 +2385,36 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
 
           {/* Editor/Preview Panel */}
           <div className="flex-1 flex flex-col bg-[#1e1e1e] overflow-hidden relative">
-            {/* File Tabs */}
-            <div className="flex items-center gap-1 px-3 py-2 border-b border-[#1a1a1a] bg-[#0F0F0F] overflow-x-auto">
-              {files.map(f => (
-                <button
-                  key={f.id}
-                  onClick={() => setActiveFileId(f.id)}
-                  className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-t-lg border-b-2 transition-all shrink-0 ${activeFileId === f.id
-                    ? 'bg-[#1a1a1a] border-white/20 text-white'
-                    : 'bg-transparent border-transparent text-neutral-500 hover:text-white hover:bg-[#1a1a1a]/50'
-                    } `}
-                >
-                  <FileCode size={12} className={
-                    f.name.endsWith('.html') ? 'text-neutral-400' :
-                      f.name.endsWith('.css') ? 'text-neutral-500' :
-                        f.name.endsWith('.js') ? 'text-neutral-500' : 'text-neutral-600'
-                  } />
-                  <span className="text-xs font-mono">{f.name}</span>
-                  {f.name !== 'index.html' && (
-                    <X
-                      size={12}
-                      className="opacity-0 group-hover:opacity-100 hover:text-red-400 ml-1 transition-opacity"
-                      onClick={(e) => { e.stopPropagation(); removeFile(f.id); }}
-                    />
-                  )}
-                </button>
-              ))}
 
-              {/* Add file button */}
-              <button
-                onClick={addNewFile}
-                className="p-1.5 text-neutral-500 hover:text-white shrink-0 transition-colors"
-                title="Novo Arquivo"
-              >
-                <FilePlus size={14} />
-              </button>
-
-              {/* Upload button */}
-              <label className="p-1.5 text-neutral-500 hover:text-white cursor-pointer shrink-0 transition-colors" title="Upload">
-                <Upload size={14} />
-                <input
-                  type="file"
-                  multiple
-                  className="hidden"
-                  accept=".html,.css,.js,.json"
-                  onChange={handleFileUpload}
-                />
-              </label>
-            </div>
-
-            {/* Editor Header / Tabs */}
-            <div className="bg-[#0F0F0F] border-b border-[#1a1a1a] px-4 py-2 flex items-center justify-between shrink-0 h-10">
-              {/* View Mode Toggle */}
-              <div className="flex bg-[#050505] rounded-lg p-0.5 border border-[#262626]">
+            {/* Device Selector (Only visible in preview) */}
+            {viewMode === 'preview' && (
+              <div className="flex items-center gap-1 bg-[#050505] rounded-lg p-0.5 border border-[#262626] ml-auto">
+                {(['desktop', 'tablet', 'mobile'] as DeviceType[]).map((d) => {
+                  const Icon = d === 'desktop' ? Monitor : d === 'tablet' ? Tablet : Smartphone;
+                  return (
+                    <button
+                      key={d}
+                      onClick={() => setDevice(d)}
+                      className={`p - 1.5 rounded transition - all ${device === d
+                        ? 'bg-[#1a1a1a] text-white'
+                        : 'text-neutral-500 hover:text-white'
+                        } `}
+                      title={DEVICE_SIZES[d].label}
+                    >
+                      <Icon size={14} />
+                    </button>
+                  );
+                })}
+                <div className="w-px h-4 bg-[#262626] mx-1"></div>
                 <button
-                  onClick={() => setViewMode('code')}
-                  className={`flex items-center gap-2 px-3 py-1 rounded-md text-xs font-medium transition-all ${viewMode === 'code'
-                    ? 'bg-[#1a1a1a] text-white shadow-sm'
-                    : 'text-neutral-500 hover:text-neutral-300'
-                    } `}
+                  onClick={() => setPreviewKey(k => k + 1)}
+                  className="p-1.5 text-neutral-500 hover:text-white hover:bg-[#1a1a1a] rounded transition-all"
+                  title="Atualizar"
                 >
-                  <Code size={12} />
-                  Editor
-                </button>
-                <button
-                  onClick={() => setViewMode('preview')}
-                  className={`flex items-center gap-2 px-3 py-1 rounded-md text-xs font-medium transition-all ${viewMode === 'preview'
-                    ? 'bg-[#1a1a1a] text-white shadow-sm'
-                    : 'text-neutral-500 hover:text-neutral-300'
-                    } `}
-                >
-                  <Eye size={12} />
-                  Preview
+                  <RefreshCw size={14} />
                 </button>
               </div>
-
-              {/* Render Mode Toggle (Design vs Code Preview) */}
-              {viewMode === 'preview' && (
-                <div className="flex bg-[#050505] rounded-lg p-0.5 border border-[#262626] ml-4">
-                  <button
-                    onClick={() => setRenderMode('ast')}
-                    className={`flex items-center gap-2 px-3 py-1 rounded-md text-xs font-medium transition-all ${renderMode === 'ast'
-                      ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-sm'
-                      : 'text-neutral-500 hover:text-neutral-300'
-                      } `}
-                    title="Design Mode (Interactive AST)"
-                  >
-                    <Layout size={12} />
-                    Design
-                  </button>
-                  <button
-                    onClick={() => setRenderMode('iframe')}
-                    className={`flex items-center gap-2 px-3 py-1 rounded-md text-xs font-medium transition-all ${renderMode === 'iframe'
-                      ? 'bg-[#1a1a1a] text-white shadow-sm'
-                      : 'text-neutral-500 hover:text-neutral-300'
-                      } `}
-                    title="Code Mode (Legacy HTML)"
-                  >
-                    <FileCode size={12} />
-                    Code
-                  </button>
-                </div>
-              )}
-
-              {/* Device Selector (Only visible in preview) */}
-              {viewMode === 'preview' && (
-                <div className="flex items-center gap-1 bg-[#050505] rounded-lg p-0.5 border border-[#262626] ml-auto">
-                  {(['desktop', 'tablet', 'mobile'] as DeviceType[]).map((d) => {
-                    const Icon = d === 'desktop' ? Monitor : d === 'tablet' ? Tablet : Smartphone;
-                    return (
-                      <button
-                        key={d}
-                        onClick={() => setDevice(d)}
-                        className={`p - 1.5 rounded transition - all ${device === d
-                          ? 'bg-[#1a1a1a] text-white'
-                          : 'text-neutral-500 hover:text-white'
-                          } `}
-                        title={DEVICE_SIZES[d].label}
-                      >
-                        <Icon size={14} />
-                      </button>
-                    );
-                  })}
-                  <div className="w-px h-4 bg-[#262626] mx-1"></div>
-                  <button
-                    onClick={() => setPreviewKey(k => k + 1)}
-                    className="p-1.5 text-neutral-500 hover:text-white hover:bg-[#1a1a1a] rounded transition-all"
-                    title="Atualizar"
-                  >
-                    <RefreshCw size={14} />
-                  </button>
-                </div>
-              )}
-            </div>
+            )}
 
             {/* Content Area */}
             <div className="flex-1 overflow-hidden relative flex flex-row">
@@ -2470,15 +2472,26 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
                       </div>
                     ) : (
                       // Legacy Code Mode (iframe)
-                      <iframe
-                        key={previewKey}
-                        ref={iframeRef}
-                        srcDoc={bundledHtml}
-                        className="flex-1 w-full border-none bg-white"
-                        title="Preview"
-                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-                        style={{ minHeight: 0 }}
-                      />
+                      <>
+                        <iframe
+                          key={previewKey}
+                          ref={iframeRef}
+                          srcDoc={bundledHtml}
+                          className="flex-1 w-full border-none bg-white"
+                          title="Preview"
+                          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                          style={{ minHeight: 0 }}
+                        />
+                        {/* Visual Editor Panel injetado flutuando no Iframe */}
+                        <VisualEditorPanel
+                          selectedElement={selectedVisualElement}
+                          onUpdateElement={handleUpdateVisualElement}
+                          onClose={handleCloseVisualEditor}
+                          onOpenDrive={() => {
+                            showToast('A funcionalidade de troca de imagens com o Drive será implementada a seguir.', 'info');
+                          }}
+                        />
+                      </>
                     )}
                   </div>
                 </div>
@@ -2536,7 +2549,7 @@ export const PagesBuilder: React.FC<PagesBuilderProps> = ({ userEmail, onBack })
             </div>
           </div>
         </div>
-      </div >
+      </div>
     </div >
   );
 };

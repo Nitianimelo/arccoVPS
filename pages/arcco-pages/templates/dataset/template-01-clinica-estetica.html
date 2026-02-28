@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumina Clinic - Transforme sua Beleza</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #c4a47c;
+            --secondary: #2d3436;
+            --accent: #f8e1d6;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Playfair Display', serif; }
+        .glass { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .glass-dark { background: rgba(45, 52, 54, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .mesh-gradient {
+            background: linear-gradient(135deg, #f8e1d6 0%, #e8d5c4 25%, #d4b896 50%, #c4a47c 75%, #f8e1d6 100%);
+            background-size: 400% 400%;
+            animation: meshGradient 15s ease infinite;
+        }
+        @keyframes meshGradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+        .float-element { animation: float 6s ease-in-out infinite; }
+        .float-element-delay { animation: float 6s ease-in-out infinite 2s; }
+        .pulse-soft { animation: pulse-soft 3s ease-in-out infinite; }
+        .card-hover { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-hover:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 30px 60px -20px rgba(196, 164, 124, 0.4);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #b89366);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        .btn-primary:hover::before { left: 100%; }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px -10px rgba(196, 164, 124, 0.6);
+        }
+        .btn-primary:active { transform: translateY(-1px) scale(0.98); }
+        .text-gradient {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+        .orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
+        .orb-1 { width: 400px; height: 400px; background: rgba(196, 164, 124, 0.3); top: -100px; right: -100px; }
+        .orb-2 { width: 300px; height: 300px; background: rgba(248, 225, 214, 0.4); bottom: 10%; left: -100px; }
+        .orb-3 { width: 250px; height: 250px; background: rgba(196, 164, 124, 0.2); top: 40%; right: 10%; }
+        .smooth-corner { border-radius: 24px; }
+        .icon-container { transition: all 0.3s ease; }
+        .card-hover:hover .icon-container { transform: rotate(-10deg) scale(1.1); }
+    </style>
+</head>
+<body class="mesh-gradient min-h-screen overflow-x-hidden">
+    <!-- Floating Orbs -->
+    <div class="orb orb-1 pulse-soft"></div>
+    <div class="orb orb-2 pulse-soft" style="animation-delay: 1s;"></div>
+    <div class="orb orb-3 pulse-soft" style="animation-delay: 2s;"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto glass rounded-2xl px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#c4a47c] to-[#b89366] flex items-center justify-center">
+                    <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="font-serif text-xl font-semibold text-gray-800">Lumina</span>
+            </div>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#servicos" class="text-gray-700 hover:text-[#c4a47c] transition-colors">Serviços</a>
+                <a href="#sobre" class="text-gray-700 hover:text-[#c4a47c] transition-colors">Sobre</a>
+                <a href="#depoimentos" class="text-gray-700 hover:text-[#c4a47c] transition-colors">Depoimentos</a>
+            </div>
+            <button class="btn-primary text-white px-6 py-2.5 rounded-full font-medium">
+                Agendar Consulta
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center pt-20 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+            <div class="space-y-8 z-10">
+                <div class="inline-flex items-center gap-2 glass-dark rounded-full px-4 py-2">
+                    <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                    <span class="text-white text-sm">Agenda aberta para fevereiro</span>
+                </div>
+                <h1 class="text-5xl md:text-7xl font-bold text-gray-800 leading-tight">
+                    Descubra sua <span class="text-gradient">beleza natural</span>
+                </h1>
+                <p class="text-xl text-gray-700 leading-relaxed max-w-lg">
+                    Tratamentos estéticos personalizados que realçam seus traços únicos. Tecnologia avançada com cuidado humano.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <button class="btn-primary text-white px-8 py-4 rounded-full font-semibold text-lg flex items-center gap-2 group">
+                        Começar agora
+                        <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+                    <button class="glass-dark text-white px-8 py-4 rounded-full font-semibold flex items-center gap-2 hover:bg-white/20 transition-all">
+                        <i data-lucide="play-circle" class="w-5 h-5"></i>
+                        Ver vídeo
+                    </button>
+                </div>
+                <div class="flex items-center gap-6 pt-4">
+                    <div class="flex -space-x-3">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-pink-300 to-pink-400 border-3 border-white"></div>
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-300 to-purple-400 border-3 border-white"></div>
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-300 to-blue-400 border-3 border-white"></div>
+                        <div class="w-12 h-12 rounded-full glass-dark flex items-center justify-center text-white text-sm font-medium border-3 border-white">+2k</div>
+                    </div>
+                    <div class="text-gray-700">
+                        <span class="font-semibold text-lg">2.000+</span>
+                        <p class="text-sm">clientes satisfeitos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="relative z-10">
+                <div class="glass smooth-corner p-4 float-element">
+                    <img src="https://images.pexels.com/photos/3997986/pexels-photo-3997986.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Mulher com tratamento estético" class="rounded-2xl w-full h-auto object-cover">
+                </div>
+                <div class="absolute -bottom-10 -left-10 glass smooth-corner p-6 float-element-delay max-w-xs">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
+                            <i data-lucide="check-circle" class="w-7 h-7 text-white"></i>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">98% de satisfação</p>
+                            <p class="text-sm text-gray-600">Baseado em avaliações</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="servicos" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16 reveal">
+                <span class="inline-block px-4 py-2 rounded-full glass text-gray-700 text-sm font-medium mb-4">Nossos Serviços</span>
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">Treatments que <span class="text-gradient">transformam</span></h2>
+                <p class="text-xl text-gray-700 max-w-2xl mx-auto">Procedimentos personalizados para cada necessidade, com tecnologia de ponta.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass smooth-corner p-8 card-hover reveal">
+                    <div class="icon-container w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center mb-6">
+                        <i data-lucide="flame" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-3">Harmonização Facial</h3>
+                    <p class="text-gray-600 mb-6">Realce seus traços naturais com preenchimento e toxina botulínica.</p>
+                    <a href="#" class="text-[#c4a47c] font-medium flex items-center gap-2 hover:gap-3 transition-all">
+                        Saiba mais <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+                <div class="glass smooth-corner p-8 card-hover reveal" style="transition-delay: 0.1s;">
+                    <div class="icon-container w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center mb-6">
+                        <i data-lucide="droplets" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-3">Skinbooster</h3>
+                    <p class="text-gray-600 mb-6">Hidratação profunda para uma pele luminosa e rejuvenescida.</p>
+                    <a href="#" class="text-[#c4a47c] font-medium flex items-center gap-2 hover:gap-3 transition-all">
+                        Saiba mais <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+                <div class="glass smooth-corner p-8 card-hover reveal" style="transition-delay: 0.2s;">
+                    <div class="icon-container w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-400 to-violet-500 flex items-center justify-center mb-6">
+                        <i data-lucide="sparkles" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-3">Laserterapia</h3>
+                    <p class="text-gray-600 mb-6">Tratamentos a laser para rejuvenescimento e remoção de manchas.</p>
+                    <a href="#" class="text-[#c4a47c] font-medium flex items-center gap-2 hover:gap-3 transition-all">
+                        Saiba mais <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="depoimentos" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16 reveal">
+                <span class="inline-block px-4 py-2 rounded-full glass text-gray-700 text-sm font-medium mb-4">Depoimentos</span>
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">O que dizem <span class="text-gradient">nossas clientes</span></h2>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass smooth-corner p-8 card-hover reveal">
+                    <div class="flex gap-1 mb-4">
+                        <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+                        <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+                        <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+                        <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+                        <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+                    </div>
+                    <p class="text-gray-700 mb-6">"A harmonização facial mudou minha autoestima. O resultado foi super natural e duradouro!"</p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-pink-400 to-rose-500"></div>
+                        <div>
+                            <p class="font-semibold text-gray-800">Ana Silva</p>
+                            <p class="text-sm text-gray-600">Cliente desde 2023</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass smooth-corner p-8 card-hover reveal" style="transition-delay: 0.1s;">
+                    <div class="flex gap-1 mb-4">
+                        <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+                        <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+                        <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+                        <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+                        <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+                    </div>
+                    <p class="text-gray-700 mb-6">"Profissionalismo incrível! A equipe me fez sentir super confortável durante todo o processo."</p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500"></div>
+                        <div>
+                            <p class="font-semibold text-gray-800">Marina Costa</p>
+                            <p class="text-sm text-gray-600">Cliente desde 2022</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass smooth-corner p-8 card-hover reveal" style="transition-delay: 0.2s;">
+                    <div class="flex gap-1 mb-4">
+                        <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+                        <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+                        <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+                        <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+                        <i data-lucide="star" class="w-5 h-5 fill-yellow-400 text-yellow-400"></i>
+                    </div>
+                    <p class="text-gray-700 mb-6">"Os resultados da laserterapia superaram minhas expectativas. Minha pele nunca esteve tão bonita!"</p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-violet-500"></div>
+                        <div>
+                            <p class="font-semibold text-gray-800">Carla Mendes</p>
+                            <p class="text-sm text-gray-600">Cliente desde 2024</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-24 relative">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="glass-dark smooth-corner p-12 text-center reveal">
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Pronta para se transformar?</h2>
+                <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">Agende sua consulta gratuita e descubra qual tratamento é ideal para você.</p>
+                <button class="btn-primary text-white px-10 py-4 rounded-full font-semibold text-lg flex items-center gap-2 mx-auto">
+                    Agendar Consulta Gratuita
+                    <i data-lucide="calendar" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="glass-dark py-12">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <div class="flex items-center justify-center gap-2 mb-4">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#c4a47c] to-[#b89366] flex items-center justify-center">
+                    <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="font-serif text-xl font-semibold text-white">Lumina Clinic</span>
+            </div>
+            <p class="text-gray-400">© 2024 Lumina Clinic. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Scroll Reveal Animation
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealOnScroll = () => {
+            revealElements.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                const windowHeight = window.innerHeight;
+                if (rect.top < windowHeight * 0.85) {
+                    el.classList.add('active');
+                }
+            });
+        };
+        window.addEventListener('scroll', revealOnScroll);
+        revealOnScroll();
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Button click feedback
+        document.querySelectorAll('.btn-primary').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+            });
+        });
+
+        // Mouse parallax on hero image
+        const heroImage = document.querySelector('.float-element');
+        if (heroImage) {
+            document.addEventListener('mousemove', (e) => {
+                const x = (window.innerWidth / 2 - e.pageX) / 50;
+                const y = (window.innerHeight / 2 - e.pageY) / 50;
+                heroImage.style.transform = `translate(${x}px, ${y}px)`;
+            });
+        }
+    </script>
+</body>
+</html>

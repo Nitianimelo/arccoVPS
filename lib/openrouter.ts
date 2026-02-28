@@ -263,34 +263,52 @@ class OpenRouterService {
     let fullContent = '';
 
     try {
+      let buffer = '';
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+        buffer += chunk;
+
+        // Split into lines; the LAST element may be incomplete, keep it in buffer
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data: ')) continue;
 
-            // Skip obviously malformed data (incomplete JSON)
-            if (!data || data.length < 10) continue;
-            if (!data.includes('{') && !data.includes('[')) continue;
+          const data = trimmed.slice(6);
+          if (data === '[DONE]') continue;
+          if (!data || data.length < 10) continue;
 
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content || '';
-              if (content) {
-                fullContent += content;
-                onChunk(content);
-              }
-            } catch (e) {
-              // Don't accumulate malformed chunks - skip them
-              console.warn('[OpenRouter] Skipping malformed SSE chunk:', e, 'data:', data.substring(0, 100));
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              fullContent += content;
+              onChunk(content);
             }
+          } catch (e) {
+            console.warn('[OpenRouter] Skipping malformed SSE chunk:', (e as Error).message);
           }
+        }
+      }
+
+      // Process any remaining data left in buffer after stream ends
+      if (buffer.trim().startsWith('data: ')) {
+        const data = buffer.trim().slice(6);
+        if (data && data !== '[DONE]' && data.length >= 10) {
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              fullContent += content;
+              onChunk(content);
+            }
+          } catch { /* final fragment, safe to ignore */ }
         }
       }
     } catch (error) {

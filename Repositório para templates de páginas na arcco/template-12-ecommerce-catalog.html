@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOIR - Catálogo Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #f5f5f5;
+            --accent: #c9a96e;
+            --gold: #d4af37;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--secondary); }
+        h1, h2, h3, .serif { font-family: 'Playfair Display', serif; }
+        .product-card {
+            background: white;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--gold), var(--accent));
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+        .product-card:hover::before { transform: scaleX(1); }
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px -20px rgba(0, 0, 0, 0.15);
+        }
+        .product-card img {
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .product-card:hover img {
+            transform: scale(1.08);
+        }
+        .luxury-btn {
+            background: var(--primary);
+            color: white;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .luxury-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(201, 169, 110, 0.3), transparent);
+            transition: left 0.6s;
+        }
+        .luxury-btn:hover::before { left: 100%; }
+        .luxury-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -10px rgba(201, 169, 110, 0.4);
+        }
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .slide-up { animation: slide-up 0.8s ease-out forwards; }
+        .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+        .nav-luxury {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        .nav-luxury.scrolled {
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+        }
+        .category-card {
+            background: white;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .category-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
+        }
+        .category-card:hover img {
+            transform: scale(1.1);
+        }
+        .category-card img {
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .filter-btn {
+            transition: all 0.3s ease;
+            border: 1px solid #e5e5e5;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        .price-tag {
+            background: linear-gradient(135deg, var(--gold), var(--accent));
+            box-shadow: 0 4px 15px rgba(201, 169, 110, 0.3);
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 nav-luxury" id="navbar">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="#" class="serif text-3xl font-bold tracking-wider text-[#1a1a1a]">NOIR</a>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#" class="text-sm text-[#1a1a1a] hover:text-[#c9a96e] transition-colors font-medium">NOVOS</a>
+                <a href="#" class="text-sm text-[#1a1a1a] hover:text-[#c9a96e] transition-colors font-medium">MULHER</a>
+                <a href="#" class="text-sm text-[#1a1a1a] hover:text-[#c9a96e] transition-colors font-medium">HOMEM</a>
+                <a href="#" class="text-sm text-[#1a1a1a] hover:text-[#c9a96e] transition-colors font-medium">ACESSÓRIOS</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="text-[#1a1a1a] hover:text-[#c9a96e] transition-colors">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </button>
+                <button class="text-[#1a1a1a] hover:text-[#c9a96e] transition-colors">
+                    <i data-lucide="heart" class="w-5 h-5"></i>
+                </button>
+                <button class="text-[#1a1a1a] hover:text-[#c9a96e] transition-colors relative">
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    <span class="absolute -top-2 -right-2 w-5 h-5 bg-[#1a1a1a] text-white text-xs rounded-full flex items-center justify-center">2</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="pt-32 pb-16 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-12 slide-up">
+                <p class="text-sm font-bold tracking-widest text-[#c9a96e] uppercase mb-3">Coleção 2024</p>
+                <h1 class="text-5xl md:text-7xl font-light leading-tight serif">Catálogo <span class="italic font-semibold text-[#c9a96e]">Premium</span></h1>
+                <p class="text-xl text-gray-600 mt-6 max-w-2xl mx-auto">Peças exclusivas selecionadas com curadoria para quem busca sofisticação e qualidade.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="category-card rounded-2xl overflow-hidden reveal">
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="https://images.pexels.com/photos-1926769" alt="Category" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <h3 class="serif text-3xl font-bold text-white">Mulher</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="category-card rounded-2xl overflow-hidden reveal" style="transition-delay: 0.1s;">
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="https://images.pexels.com/photos-1483985988758" alt="Category" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <h3 class="serif text-3xl font-bold text-white">Homem</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="category-card rounded-2xl overflow-hidden reveal" style="transition-delay: 0.2s;">
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="https://images.pexels.com/photos-1596555067433-7d75f62333b4" alt="Category" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <h3 class="serif text-3xl font-bold text-white">Calçados</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="category-card rounded-2xl overflow-hidden reveal" style="transition-delay: 0.3s;">
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="https://images.pexels.com.photos-1584917865511" alt="Category" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <h3 class="serif text-3xl font-bold text-white">Acessórios</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products -->
+    <section class="py-16">
+        <div class="max-w-7xl mx-auto px-6">
+            <!-- Filters -->
+            <div class="flex flex-wrap justify-center gap-3 mb-12 reveal">
+                <button class="filter-btn active px-6 py-2.5 rounded-full text-sm font-medium">TODOS</button>
+                <button class="filter-btn px-6 py-2.5 rounded-full text-sm font-medium text-[#1a1a1a]">VESTIDOS</button>
+                <button class="filter-btn px-6 py-2.5 rounded-full text-sm font-medium text-[#1a1a1a]">BLAZERS</button>
+                <button class="filter-btn px-6 py-2.5 rounded-full text-sm font-medium text-[#1a1a1a]">CALÇADOS</button>
+                <button class="filter-btn px-6 py-2.5 rounded-full text-sm font-medium text-[#1a1a1a]">BOLSAS</button>
+            </div>
+
+            <!-- Product Grid -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="product-card rounded-xl overflow-hidden reveal">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com/photos-1926769" alt="Product" class="w-full h-80 object-cover">
+                        <div class="price-tag absolute top-4 right-4 text-white px-4 py-2 rounded-full text-sm font-bold">NOVO</div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">VESTIDOS</p>
+                        <h4 class="serif text-lg font-semibold text-[#1a1a1a] mb-2">Vestido Midi Seda</h4>
+                        <p class="text-xl font-bold text-[#c9a96e]">R$ 1.290</p>
+                    </div>
+                </div>
+                <div class="product-card rounded-xl overflow-hidden reveal" style="transition-delay: 0.1s;">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com.photos-1092687" alt="Product" class="w-full h-80 object-cover">
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">BLAZERS</p>
+                        <h4 class="serif text-lg font-semibold text-[#1a1a1a] mb-2">Blazer Alfaiataria</h4>
+                        <p class="text-xl font-bold text-[#c9a96e]">R$ 1.850</p>
+                    </div>
+                </div>
+                <div class="product-card rounded-xl overflow-hidden reveal" style="transition-delay: 0.2s;">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com.photos-1596555067433-7d75f62333b4" alt="Product" class="w-full h-80 object-cover">
+                        <div class="price-tag absolute top-4 right-4 text-white px-4 py-2 rounded-full text-sm font-bold" style="background: #e74c3c;">-30%</div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">CALÇADOS</p>
+                        <h4 class="serif text-lg font-semibold text-[#1a1a1a] mb-2">Sapato Stiletto</h4>
+                        <div class="flex items-center gap-3">
+                            <p class="text-xl font-bold text-[#c9a96e]">R$ 1.050</p>
+                            <p class="text-sm text-gray-400 line-through">R$ 1.500</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card rounded-xl overflow-hidden reveal" style="transition-delay: 0.3s;">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com.photos-1584917865511" alt="Product" class="w-full h-80 object-cover">
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">BOLSAS</p>
+                        <h4 class="serif text-lg font-semibold text-[#1a1a1a] mb-2">Bolsa Couro Premium</h4>
+                        <p class="text-xl font-bold text-[#c9a96e]">R$ 2.490</p>
+                    </div>
+                </div>
+                <div class="product-card rounded-xl overflow-hidden reveal">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com/photos-1515886657613-9f3515b0c78f" alt="Product" class="w-full h-80 object-cover">
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">VESTIDOS</p>
+                        <h4 class="serif text-lg font-semibold text-[#1a1a1a] mb-2">Vestido Noiva</h4>
+                        <p class="text-xl font-bold text-[#c9a96e]">R$ 4.990</p>
+                    </div>
+                </div>
+                <div class="product-card rounded-xl overflow-hidden reveal" style="transition-delay: 0.1s;">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com/photos-1483985988758" alt="Product" class="w-full h-80 object-cover">
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">HOMEM</p>
+                        <h4 class="serif text-lg font-semibold text-[#1a1a1a] mb-2">Terno Alfaiataria</h4>
+                        <p class="text-xl font-bold text-[#c9a96e]">R$ 3.990</p>
+                    </div>
+                </div>
+                <div class="product-card rounded-xl overflow-hidden reveal" style="transition-delay: 0.2s;">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com/photos-2033997" alt="Product" class="w-full h-80 object-cover">
+                        <div class="price-tag absolute top-4 right-4 text-white px-4 py-2 rounded-full text-sm font-bold">-20%</div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">ACESSÓRIOS</p>
+                        <h4 class="serif text-lg font-semibold text-[#1a1a1a] mb-2">Relógio Premium</h4>
+                        <div class="flex items-center gap-3">
+                            <p class="text-xl font-bold text-[#c9a96e]">R$ 1.990</p>
+                            <p class="text-sm text-gray-400 line-through">R$ 2.490</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card rounded-xl overflow-hidden reveal" style="transition-delay: 0.3s;">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com/photos-1213245" alt="Product" class="w-full h-80 object-cover">
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-2">ACESSÓRIOS</p>
+                        <h4 class="serif text-lg font-semibold text-[#1a1a1a] mb-2">Óculos de Sol</h4>
+                        <p class="text-xl font-bold text-[#c9a96e]">R$ 790</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Load More -->
+            <div class="text-center mt-16 reveal">
+                <button class="luxury-btn px-10 py-4 rounded-full font-semibold text-sm tracking-widest">
+                    CARREGAR MAIS
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section class="py-16 bg-[#1a1a1a] text-white">
+        <div class="max-w-4xl mx-auto px-6 text-center reveal">
+            <h3 class="serif text-4xl font-light mb-4">Receba novidades <span class="italic text-[#c9a96e]">exclusivas</span></h3>
+            <p class="text-gray-400 mb-8">Assine nossa newsletter e seja o primeiro a saber sobre novas coleções e ofertas.</p>
+            <div class="flex flex-col md:flex-row gap-4 max-w-xl mx-auto">
+                <input type="email" placeholder="Seu e-mail" class="flex-1 px-6 py-4 bg-white/10 border border-white/20 rounded-full text-white placeholder-gray-500 focus:border-[#c9a96e] focus:outline-none transition-colors">
+                <button class="px-8 py-4 bg-[#c9a96e] text-white rounded-full font-semibold hover:bg-[#b89366] transition-colors">
+                    ASSINAR
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-[#1a1a1a] text-white py-12 border-t border-white/10">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <a href="#" class="serif text-3xl font-bold tracking-wider">NOIR</a>
+                <p class="text-gray-500 text-sm">© 2024 NOIR. Luxo em cada detalhe.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Filter buttons
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Reveal on scroll
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealOnScroll = () => {
+            revealElements.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                const windowHeight = window.innerHeight;
+                if (rect.top < windowHeight * 0.85) {
+                    el.classList.add('active');
+                }
+            });
+        };
+        window.addEventListener('scroll', revealOnScroll);
+        revealOnScroll();
+
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+    </script>
+</body>
+</html>

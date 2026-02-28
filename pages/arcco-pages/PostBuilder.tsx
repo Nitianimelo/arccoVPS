@@ -1,28 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-    ChevronLeft,
-    ChevronRight,
-    ChevronDown,
-    Download,
-    Plus,
-    Trash2,
-    Image as ImageIcon,
-    Type,
-    MoreHorizontal,
-    Save,
-    Palette,
-    Layout,
-    Layers,
-    Undo,
-    Redo,
-    Share2,
-    X
+    ChevronLeft, Download, Plus, Trash2, Save, Undo, Redo, X, Copy, Layers,
+    Image as ImageIcon, Type, Square
 } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import JSZip from 'jszip';
 import { jsPDF } from 'jspdf';
 import { PostAST, SlideNode, SectionNode, PostFormat } from './types/ast';
 import { useToast } from '../../components/Toast';
+import { useCanvasDrag } from './editor/useCanvasDrag';
+import { FloatingToolbar } from './editor/FloatingToolbar';
+import { ElementLibrary } from './editor/ElementLibrary';
+import { CanvasPropertyPanel } from './editor/CanvasPropertyPanel';
 
 interface PostBuilderProps {
     initialState?: PostAST;
@@ -31,19 +20,12 @@ interface PostBuilderProps {
 }
 
 const DEFAULT_POST: PostAST = {
-    id: 'new-post',
-    format: 'square',
-    meta: {
-        title: 'Novo Post',
-        theme: 'dark'
-    },
-    slides: [
-        {
-            id: 'slide-1',
-            elements: []
-        }
-    ]
+    id: 'new-post', format: 'square',
+    meta: { title: 'Novo Post', theme: 'dark' },
+    slides: [{ id: 'slide-1', elements: [] }],
 };
+
+const GOOGLE_FONTS_LINK = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&family=Roboto:wght@300;400;500;700;900&family=Playfair+Display:wght@400;700;900&family=Montserrat:wght@300;400;500;600;700;800;900&family=Oswald:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700;800;900&family=Lato:wght@300;400;700;900&family=Bebas+Neue&family=Dancing+Script:wght@400;700&display=swap';
 
 export const PostBuilder: React.FC<PostBuilderProps> = ({ initialState, onBack, onSave }) => {
     const { showToast } = useToast();
@@ -54,196 +36,238 @@ export const PostBuilder: React.FC<PostBuilderProps> = ({ initialState, onBack, 
     const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
     const [isExporting, setIsExporting] = useState(false);
     const [exportFormat, setExportFormat] = useState<'png' | 'jpeg' | 'pdf'>('png');
-    const [exportScale, setExportScale] = useState<number>(2);
+    const [exportScale, setExportScale] = useState(2);
     const [showExportMenu, setShowExportMenu] = useState(false);
     const [scale, setScale] = useState(1);
+    const [showLibrary, setShowLibrary] = useState(true);
+
+    // Undo / Redo
+    const [history, setHistory] = useState<PostAST[]>([]);
+    const [historyIndex, setHistoryIndex] = useState(-1);
 
     const canvasRef = useRef<HTMLDivElement>(null);
     const hiddenRenderRef = useRef<HTMLDivElement>(null);
+    const canvasWrapperRef = useRef<HTMLDivElement>(null);
 
-    // Helper Props
     const currentSlide = post.slides[currentSlideIndex];
-    const selectedElement = currentSlide.elements.find(el => el.id === selectedElementId);
+    const selectedElement = currentSlide?.elements.find(el => el.id === selectedElementId) || null;
 
-    // Auto-scale canvas to fit screen
+    // Google Fonts
     useEffect(() => {
-        const handleResize = () => {
-            if (canvasRef.current) {
-                const parent = canvasRef.current.parentElement;
-                if (parent) {
-                    const availableHeight = parent.clientHeight - 80; // margins
-                    const availableWidth = parent.clientWidth - 80;
+        if (!document.querySelector('link[href*="fonts.googleapis.com"]')) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet'; link.href = GOOGLE_FONTS_LINK;
+            document.head.appendChild(link);
+        }
+    }, []);
 
-                    let targetHeight = 1080;
-                    let targetWidth = 1080;
-
-                    if (post.format === 'portrait') targetHeight = 1350;
-                    if (post.format === 'story') {
-                        targetHeight = 1920;
-                        targetWidth = 1080;
-                    }
-
-                    const scaleH = availableHeight / targetHeight;
-                    const scaleW = availableWidth / targetWidth;
-
-                    setScale(Math.min(scaleH, scaleW, 0.8)); // Max scale 0.8 to give breathing room
-                }
-            }
+    // Canvas auto-scale
+    useEffect(() => {
+        const resize = () => {
+            const parent = canvasWrapperRef.current;
+            if (!parent) return;
+            const ah = parent.clientHeight - 60;
+            const aw = parent.clientWidth - 60;
+            const tw = 1080;
+            const th = post.format === 'square' ? 1080 : post.format === 'portrait' ? 1350 : 1920;
+            setScale(Math.min(ah / th, aw / tw, 0.75));
         };
-
-        window.addEventListener('resize', handleResize);
-        handleResize();
-        return () => window.removeEventListener('resize', handleResize);
+        window.addEventListener('resize', resize);
+        resize();
+        return () => window.removeEventListener('resize', resize);
     }, [post.format]);
 
-    // --- ACTIONS ---
+    // History push
+    const pushHistory = useCallback((newPost: PostAST) => {
+        setHistory(prev => [...prev.slice(0, historyIndex + 1), newPost]);
+        setHistoryIndex(prev => prev + 1);
+    }, [historyIndex]);
 
-    const handleUpdateElement = (elementId: string, updates: Partial<SectionNode>) => {
+    const undo = () => {
+        if (historyIndex <= 0) return;
+        setHistoryIndex(prev => prev - 1);
+        setPost(history[historyIndex - 1]);
+    };
+    const redo = () => {
+        if (historyIndex >= history.length - 1) return;
+        setHistoryIndex(prev => prev + 1);
+        setPost(history[historyIndex + 1]);
+    };
+
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
+            if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); }
+            if (e.key === 'Delete' && selectedElementId) { handleDeleteElement(selectedElementId); }
+            if (e.key === 'Escape') { setSelectedElementId(null); }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    });
+
+    // ------ ACTIONS ------
+    const handleUpdateElement = useCallback((elementId: string, updates: Partial<SectionNode>) => {
+        setPost(prev => {
+            const newSlides = prev.slides.map((slide, idx) => {
+                if (idx !== currentSlideIndex) return slide;
+                return {
+                    ...slide,
+                    elements: slide.elements.map(el => {
+                        if (el.id !== elementId) return el;
+                        return {
+                            ...el,
+                            ...updates,
+                            props: { ...el.props, ...(updates.props || {}) },
+                            styles: { ...el.styles, ...(updates.styles || {}) },
+                        };
+                    }),
+                };
+            });
+            const newPost = { ...prev, slides: newSlides };
+            return newPost;
+        });
+    }, [currentSlideIndex]);
+
+    const handleDeleteElement = (id: string) => {
         setPost(prev => {
             const newSlides = [...prev.slides];
-            const slide = newSlides[currentSlideIndex];
-            const elIndex = slide.elements.findIndex(e => e.id === elementId);
-            if (elIndex === -1) return prev;
-
-            slide.elements[elIndex] = { ...slide.elements[elIndex], ...updates };
-            return { ...prev, slides: newSlides };
+            newSlides[currentSlideIndex] = {
+                ...newSlides[currentSlideIndex],
+                elements: newSlides[currentSlideIndex].elements.filter(e => e.id !== id),
+            };
+            const newPost = { ...prev, slides: newSlides };
+            pushHistory(newPost);
+            return newPost;
         });
+        setSelectedElementId(null);
+    };
+
+    const handleDuplicateElement = (id: string) => {
+        const el = currentSlide.elements.find(e => e.id === id);
+        if (!el) return;
+        const newEl = {
+            ...el,
+            id: `${el.type.toLowerCase()}-${Date.now()}`,
+            styles: { ...el.styles, top: `${(parseFloat(el.styles?.top || '0') + 30)}px`, left: `${(parseFloat(el.styles?.left || '0') + 30)}px` },
+        };
+        handleAddElement(newEl);
+    };
+
+    const handleAddElement = (el: SectionNode) => {
+        setPost(prev => {
+            const newSlides = [...prev.slides];
+            newSlides[currentSlideIndex] = {
+                ...newSlides[currentSlideIndex],
+                elements: [...newSlides[currentSlideIndex].elements, el],
+            };
+            const newPost = { ...prev, slides: newSlides };
+            pushHistory(newPost);
+            return newPost;
+        });
+        setSelectedElementId(el.id);
     };
 
     const handleUpdateFormat = (format: PostFormat) => {
-        setPost(prev => ({ ...prev, format }));
+        const newPost = { ...post, format };
+        setPost(newPost);
+        pushHistory(newPost);
     };
 
     const handleAddSlide = () => {
-        const newSlide: SlideNode = {
-            id: `slide-${Date.now()}`,
-            elements: []
-        };
-        setPost(prev => ({
-            ...prev,
-            slides: [...prev.slides, newSlide]
-        }));
-        setCurrentSlideIndex(post.slides.length); // Go to new slide (length is post-update index)
+        const newSlide: SlideNode = { id: `slide-${Date.now()}`, elements: [] };
+        setPost(prev => ({ ...prev, slides: [...prev.slides, newSlide] }));
+        setCurrentSlideIndex(post.slides.length);
     };
 
     const handleDeleteSlide = (index: number) => {
         if (post.slides.length <= 1) return;
-        setPost(prev => ({
-            ...prev,
-            slides: prev.slides.filter((_, i) => i !== index)
-        }));
-        if (currentSlideIndex >= index && currentSlideIndex > 0) {
-            setCurrentSlideIndex(currentSlideIndex - 1);
-        }
+        setPost(prev => ({ ...prev, slides: prev.slides.filter((_, i) => i !== index) }));
+        if (currentSlideIndex >= index && currentSlideIndex > 0) setCurrentSlideIndex(prev => prev - 1);
     };
 
-    // --- EXPORT LOGIC ---
+    const handleUpdateSlideStyles = (styles: Record<string, any>) => {
+        setPost(prev => {
+            const newSlides = [...prev.slides];
+            newSlides[currentSlideIndex] = { ...newSlides[currentSlideIndex], styles };
+            return { ...prev, slides: newSlides };
+        });
+    };
 
+    // ------ DRAG & DROP ------
+    const { dragState, snapLines, startDrag, startResize, onMouseMove, onMouseUp, setCanvasSize } = useCanvasDrag(scale, handleUpdateElement);
+
+    useEffect(() => {
+        const tw = 1080;
+        const th = post.format === 'square' ? 1080 : post.format === 'portrait' ? 1350 : 1920;
+        setCanvasSize(tw, th);
+    }, [post.format, setCanvasSize]);
+
+    useEffect(() => {
+        if (dragState.isDragging || dragState.isResizing) {
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+            return () => { window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('mouseup', onMouseUp); };
+        }
+    }, [dragState.isDragging, dragState.isResizing, onMouseMove, onMouseUp]);
+
+    // Canvas rect for floating toolbar
+    const getCanvasRect = () => canvasRef.current?.getBoundingClientRect() || null;
+
+    // ------ EXPORT ------
     const exportPost = async () => {
         if (!hiddenRenderRef.current) return;
         setIsExporting(true);
         setShowExportMenu(false);
-
         try {
-            // Options for html-to-image
-            const options = {
-                quality: 1.0,
-                pixelRatio: exportScale,
-            };
-
-            const captureNode = async (node: HTMLElement, format: 'png' | 'jpeg'): Promise<string> => {
-                if (format === 'jpeg') {
-                    return await htmlToImage.toJpeg(node, { ...options, backgroundColor: '#ffffff' });
-                }
-                return await htmlToImage.toPng(node, options);
-            };
-
-            const fileName = post.meta.title || 'design';
-
+            const opts = { quality: 1.0, pixelRatio: exportScale };
+            const capture = async (node: HTMLElement, fmt: 'png' | 'jpeg') =>
+                fmt === 'jpeg' ? htmlToImage.toJpeg(node, { ...opts, backgroundColor: '#fff' }) : htmlToImage.toPng(node, opts);
+            const name = post.meta.title || 'design';
             if (post.slides.length === 1) {
-                // Single Export
                 setSelectedElementId(null);
-                await new Promise(r => setTimeout(r, 100)); // wait for UI clear
-
+                await new Promise(r => setTimeout(r, 100));
                 if (exportFormat === 'pdf') {
-                    const dataUrl = await captureNode(canvasRef.current!, 'png');
-                    const pdf = new jsPDF({
-                        orientation: post.format === 'portrait' ? 'portrait' : post.format === 'story' ? 'portrait' : 'landscape',
-                        unit: 'px',
-                        format: [canvasRef.current!.offsetWidth, canvasRef.current!.offsetHeight]
-                    });
-                    pdf.addImage(dataUrl, 'PNG', 0, 0, canvasRef.current!.offsetWidth, canvasRef.current!.offsetHeight);
-                    pdf.save(`${fileName}.pdf`);
+                    const d = await capture(canvasRef.current!, 'png');
+                    const pdf = new jsPDF({ orientation: post.format === 'story' ? 'portrait' : 'landscape', unit: 'px', format: [canvasRef.current!.offsetWidth, canvasRef.current!.offsetHeight] });
+                    pdf.addImage(d, 'PNG', 0, 0, canvasRef.current!.offsetWidth, canvasRef.current!.offsetHeight);
+                    pdf.save(`${name}.pdf`);
                 } else {
-                    const dataUrl = await captureNode(canvasRef.current!, exportFormat);
-                    const link = document.createElement('a');
-                    link.download = `${fileName}.${exportFormat}`;
-                    link.href = dataUrl;
-                    link.click();
+                    const d = await capture(canvasRef.current!, exportFormat);
+                    const a = document.createElement('a'); a.download = `${name}.${exportFormat}`; a.href = d; a.click();
                 }
-
             } else {
-                // Carousel Export
-                const hiddenSlidesContainer = hiddenRenderRef.current;
-                const slideNodes = Array.from(hiddenSlidesContainer.children) as HTMLElement[];
-
-                if (slideNodes.length !== post.slides.length) {
-                    throw new Error("Render mismatch during export");
-                }
-
+                const nodes = Array.from(hiddenRenderRef.current.children) as HTMLElement[];
                 if (exportFormat === 'pdf') {
-                    // Multi-page PDF
-                    const firstNode = slideNodes[0];
-                    const pdf = new jsPDF({
-                        orientation: post.format === 'portrait' ? 'portrait' : post.format === 'story' ? 'portrait' : 'landscape',
-                        unit: 'px',
-                        format: [firstNode.offsetWidth, firstNode.offsetHeight]
-                    });
-
-                    for (let i = 0; i < slideNodes.length; i++) {
-                        const dataUrl = await captureNode(slideNodes[i], 'png');
-                        if (i > 0) pdf.addPage([firstNode.offsetWidth, firstNode.offsetHeight]);
-                        pdf.addImage(dataUrl, 'PNG', 0, 0, firstNode.offsetWidth, firstNode.offsetHeight);
+                    const f = nodes[0];
+                    const pdf = new jsPDF({ orientation: post.format === 'story' ? 'portrait' : 'landscape', unit: 'px', format: [f.offsetWidth, f.offsetHeight] });
+                    for (let i = 0; i < nodes.length; i++) {
+                        const d = await capture(nodes[i], 'png');
+                        if (i > 0) pdf.addPage([f.offsetWidth, f.offsetHeight]);
+                        pdf.addImage(d, 'PNG', 0, 0, f.offsetWidth, f.offsetHeight);
                     }
-                    pdf.save(`${fileName}.pdf`);
+                    pdf.save(`${name}.pdf`);
                 } else {
-                    // ZIP file with images
                     const zip = new JSZip();
-
-                    for (let i = 0; i < slideNodes.length; i++) {
-                        const dataUrl = await captureNode(slideNodes[i], exportFormat);
-                        zip.file(`slide-${i + 1}.${exportFormat}`, dataUrl.split(',')[1], { base64: true });
+                    for (let i = 0; i < nodes.length; i++) {
+                        const d = await capture(nodes[i], exportFormat);
+                        zip.file(`slide-${i + 1}.${exportFormat}`, d.split(',')[1], { base64: true });
                     }
-
-                    const content = await zip.generateAsync({ type: 'blob' });
-                    const url = URL.createObjectURL(content);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `${fileName}.zip`;
-                    link.click();
+                    const blob = await zip.generateAsync({ type: 'blob' });
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${name}.zip`; a.click();
                 }
             }
-
             showToast('Download concluído!', 'success');
         } catch (err) {
             console.error('Export failed:', err);
-            showToast('Erro ao exportar. Tente novamente.', 'error');
-        } finally {
-            setIsExporting(false);
-        }
+            showToast('Erro ao exportar.', 'error');
+        } finally { setIsExporting(false); }
     };
 
-
-    // --- RENDERERS ---
-
+    // ------ RENDER ELEMENT ------
     const renderElement = (el: SectionNode, isEditable = false) => {
         const isSelected = selectedElementId === el.id;
-
-        // Base styles
-        const style: React.CSSProperties = {
-            ...el.styles,
-            position: 'absolute' // Force absolute for canvas
-        };
+        const style: React.CSSProperties = { ...el.styles, position: 'absolute' };
 
         const handleClick = (e: React.MouseEvent) => {
             if (!isEditable) return;
@@ -251,370 +275,238 @@ export const PostBuilder: React.FC<PostBuilderProps> = ({ initialState, onBack, 
             setSelectedElementId(el.id);
         };
 
-        // CONTENT TYPES
-        if (el.type === 'ImageOverlay') {
-            return (
-                <div
-                    key={el.id}
-                    onClick={handleClick}
-                    style={style}
-                    className={`${isEditable && isSelected ? 'ring-2 ring-indigo-500 z-50' : ''} cursor-pointer group`}
-                >
-                    <img
-                        src={el.props.src}
-                        alt={el.props.alt}
+        const resizeHandles = isEditable && isSelected ? (
+            <>
+                {['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'].map(h => (
+                    <div key={h}
+                        onMouseDown={e => startResize(e, el.id, h, el.styles)}
+                        className="absolute bg-white border-2 border-indigo-500 z-[60]"
                         style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: (style.objectFit as any) || 'cover',
-                            opacity: el.props.opacity
+                            width: ['n', 's'].includes(h) ? 20 : 8, height: ['e', 'w'].includes(h) ? 20 : 8,
+                            cursor: `${h}-resize`,
+                            ...(h.includes('n') ? { top: -4 } : {}),
+                            ...(h.includes('s') ? { bottom: -4 } : {}),
+                            ...(h.includes('w') ? { left: -4 } : {}),
+                            ...(h.includes('e') ? { right: -4 } : {}),
+                            ...(h === 'n' || h === 's' ? { left: '50%', transform: 'translateX(-50%)' } : {}),
+                            ...(h === 'e' || h === 'w' ? { top: '50%', transform: 'translateY(-50%)' } : {}),
+                            borderRadius: 2,
                         }}
                     />
+                ))}
+            </>
+        ) : null;
+
+        const wrapperClass = isEditable && isSelected
+            ? 'ring-2 ring-indigo-500 ring-offset-0 z-50'
+            : isEditable ? 'hover:ring-1 hover:ring-indigo-500/30' : '';
+
+        if (el.type === 'ImageOverlay') {
+            return (
+                <div key={el.id} onClick={handleClick}
+                    onMouseDown={isEditable && isSelected ? e => startDrag(e, el.id, el.styles) : undefined}
+                    style={style} className={`${wrapperClass} cursor-${isEditable ? (isSelected ? 'move' : 'pointer') : 'default'}`}>
+                    <img src={el.props.src} alt={el.props.alt || ''} draggable={false}
+                        style={{ width: '100%', height: '100%', objectFit: (style.objectFit as any) || 'cover', opacity: el.props.opacity, borderRadius: style.borderRadius }} />
+                    {resizeHandles}
                 </div>
             );
         }
 
         if (el.type === 'TextOverlay') {
-            const Tag = (el.props.variant === 'h1' ? 'h1' : el.props.variant === 'h2' ? 'h2' : 'p') as any;
             return (
-                <div
-                    key={el.id}
-                    onClick={handleClick}
-                    style={style}
-                    className={`${isEditable && isSelected ? 'ring-2 ring-indigo-500 border border-indigo-500/50' : ''} cursor-pointer hover:bg-white/5 p-2 rounded`}
-                >
-                    <Tag style={{ margin: 0 }}>{el.props.text}</Tag>
+                <div key={el.id} onClick={handleClick}
+                    onMouseDown={isEditable && isSelected ? e => startDrag(e, el.id, el.styles) : undefined}
+                    style={style} className={`${wrapperClass} cursor-${isEditable ? (isSelected ? 'move' : 'pointer') : 'default'} p-2`}>
+                    <div style={{ margin: 0, fontFamily: style.fontFamily, lineHeight: style.lineHeight || '1.3' }}>
+                        {el.props.text}
+                    </div>
+                    {resizeHandles}
                 </div>
             );
         }
 
         if (el.type === 'Shape') {
             return (
-                <div
-                    key={el.id}
-                    onClick={handleClick}
-                    style={{
-                        ...style,
-                        backgroundColor: el.props.color,
-                        background: el.props.gradient || el.props.color
-                    }}
-                    className={`${isEditable && isSelected ? 'ring-2 ring-indigo-500' : ''} cursor-pointer`}
-                >
+                <div key={el.id} onClick={handleClick}
+                    onMouseDown={isEditable && isSelected ? e => startDrag(e, el.id, el.styles) : undefined}
+                    style={{ ...style, backgroundColor: el.props.color, background: el.props.gradient || el.props.color }}
+                    className={`${wrapperClass} cursor-${isEditable ? (isSelected ? 'move' : 'pointer') : 'default'}`}>
+                    {resizeHandles}
                 </div>
             );
         }
-
         return null;
     };
 
+    // Canvas dimensions
+    const canvasW = 1080;
+    const canvasH = post.format === 'square' ? 1080 : post.format === 'portrait' ? 1350 : 1920;
+
     return (
-        <div className="flex w-full h-full bg-[#050505] text-white overflow-hidden">
+        <div className="flex w-full h-full bg-[#050505] text-white overflow-hidden select-none">
 
-            {/* 1. LEFT SIDEBAR - TOOLS */}
-            <div className="w-16 border-r border-[#262626] flex flex-col items-center py-4 gap-6 bg-[#0a0a0a] z-20">
-                <button onClick={onBack} className="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center hover:text-white text-neutral-400">
-                    <ChevronLeft size={20} />
-                </button>
-
-                <div className="w-8 h-px bg-[#262626]" />
-
-                <button className="flex flex-col items-center gap-1 text-xs text-neutral-400 hover:text-indigo-400 group">
-                    <Layout size={20} className="group-hover:scale-110 transition-transform" />
-                    <span>Format</span>
-                </button>
-
-                <button className="flex flex-col items-center gap-1 text-xs text-neutral-400 hover:text-indigo-400 group">
-                    <Type size={20} className="group-hover:scale-110 transition-transform" />
-                    <span>Texto</span>
-                </button>
-
-                <button className="flex flex-col items-center gap-1 text-xs text-neutral-400 hover:text-indigo-400 group">
-                    <ImageIcon size={20} className="group-hover:scale-110 transition-transform" />
-                    <span>Img</span>
-                </button>
-
-                <button className="flex flex-col items-center gap-1 text-xs text-neutral-400 hover:text-indigo-400 group">
-                    <Palette size={20} className="group-hover:scale-110 transition-transform" />
-                    <span>Cores</span>
-                </button>
-
-                <div className="mt-auto flex flex-col gap-4 relative">
-                    <button onClick={() => setShowExportMenu(!showExportMenu)} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors shadow-lg ${showExportMenu ? 'bg-indigo-500 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-900/20'}`}>
-                        {isExporting ? <span className="animate-spin text-xs">⏳</span> : <Download size={20} />}
+            {/* LEFT SIDEBAR - Element Library */}
+            <div className={`${showLibrary ? 'w-64' : 'w-0'} border-r border-[#262626] bg-[#0a0a0a] transition-all overflow-hidden flex flex-col z-20`}>
+                <div className="p-3 border-b border-[#262626] flex items-center justify-between">
+                    <button onClick={onBack} className="w-8 h-8 rounded-lg bg-[#1a1a1a] flex items-center justify-center hover:text-white text-neutral-400">
+                        <ChevronLeft size={18} />
                     </button>
-
-                    {showExportMenu && (
-                        <div className="absolute bottom-12 left-14 w-48 bg-[#1a1a1a] border border-[#333] rounded-xl shadow-2xl p-4 flex flex-col gap-4 z-50">
-                            <div className="flex justify-between items-center mb-1">
-                                <h4 className="text-white text-xs font-semibold uppercase tracking-wider">Exportar</h4>
-                                <button onClick={() => setShowExportMenu(false)} className="text-neutral-500 hover:text-white"><X size={14} /></button>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] text-neutral-400 font-medium">Formato</label>
-                                <div className="grid grid-cols-3 gap-1">
-                                    {['png', 'jpeg', 'pdf'].map(fmt => (
-                                        <button
-                                            key={fmt}
-                                            onClick={() => setExportFormat(fmt as any)}
-                                            className={`py-1.5 rounded text-[10px] font-medium transition-colors ${exportFormat === fmt ? 'bg-indigo-500 text-white' : 'bg-[#222] text-neutral-400 hover:bg-[#333]'}`}
-                                        >
-                                            {fmt.toUpperCase()}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] text-neutral-400 font-medium">Escala / Resolução</label>
-                                <div className="grid grid-cols-3 gap-1">
-                                    {[1, 2, 3].map(s => (
-                                        <button
-                                            key={s}
-                                            onClick={() => setExportScale(s)}
-                                            className={`py-1.5 rounded text-[10px] font-medium transition-colors ${exportScale === s ? 'bg-indigo-500 text-white' : 'bg-[#222] text-neutral-400 hover:bg-[#333]'}`}
-                                        >
-                                            {s}x
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <button
-                                onClick={exportPost}
-                                disabled={isExporting}
-                                className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex justify-center items-center gap-2 mt-2"
-                            >
-                                {isExporting ? 'Processando...' : 'Baixar Agora'}
-                            </button>
-                        </div>
-                    )}
+                    <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Elementos</span>
+                    <button onClick={() => setShowLibrary(false)} className="text-neutral-500 hover:text-white"><X size={16} /></button>
                 </div>
+                <ElementLibrary onAddElement={handleAddElement} />
             </div>
 
-            {/* 2. CENTER - CANVAS AREA */}
-            <div className="flex-1 relative bg-[#0f0f0f] bg-[radial-gradient(#262626_1px,transparent_1px)] [background-size:20px_20px] flex flex-col">
+            {/* CENTER - CANVAS */}
+            <div className="flex-1 relative bg-[#0f0f0f] bg-[radial-gradient(#1a1a1a_1px,transparent_1px)] [background-size:24px_24px] flex flex-col">
 
                 {/* Top Bar */}
-                <div className="h-14 border-b border-[#262626] bg-[#0a0a0a]/90 backdrop-blur flex items-center justify-between px-6 z-10">
-                    <h2 className="font-semibold text-neutral-200">{post.meta.title}</h2>
+                <div className="h-12 border-b border-[#262626] bg-[#0a0a0a]/95 backdrop-blur flex items-center justify-between px-4 z-10 gap-3">
+                    <div className="flex items-center gap-2">
+                        {!showLibrary && (
+                            <button onClick={() => setShowLibrary(true)} className="w-8 h-8 rounded-lg bg-[#1a1a1a] flex items-center justify-center text-neutral-400 hover:text-white">
+                                <Layers size={16} />
+                            </button>
+                        )}
+                        <button onClick={undo} disabled={historyIndex <= 0} className="w-8 h-8 rounded-lg bg-[#1a1a1a] flex items-center justify-center text-neutral-400 hover:text-white disabled:opacity-30"><Undo size={14} /></button>
+                        <button onClick={redo} disabled={historyIndex >= history.length - 1} className="w-8 h-8 rounded-lg bg-[#1a1a1a] flex items-center justify-center text-neutral-400 hover:text-white disabled:opacity-30"><Redo size={14} /></button>
+                    </div>
 
-                    <div className="flex items-center gap-2 bg-[#1a1a1a] rounded-lg p-1">
-                        <button
-                            onClick={() => handleUpdateFormat('square')}
-                            className={`px-3 py-1 text-xs rounded-md transition-colors ${post.format === 'square' ? 'bg-indigo-600 text-white' : 'text-neutral-400 hover:text-white'}`}
-                        >
-                            Square
-                        </button>
-                        <button
-                            onClick={() => handleUpdateFormat('portrait')}
-                            className={`px-3 py-1 text-xs rounded-md transition-colors ${post.format === 'portrait' ? 'bg-indigo-600 text-white' : 'text-neutral-400 hover:text-white'}`}
-                        >
-                            Portrait
-                        </button>
-                        <button
-                            onClick={() => handleUpdateFormat('story')}
-                            className={`px-3 py-1 text-xs rounded-md transition-colors ${post.format === 'story' ? 'bg-indigo-600 text-white' : 'text-neutral-400 hover:text-white'}`}
-                        >
-                            Story
-                        </button>
+                    <div className="flex items-center gap-1 bg-[#1a1a1a] rounded-lg p-0.5">
+                        {(['square', 'portrait', 'story'] as PostFormat[]).map(f => (
+                            <button key={f} onClick={() => handleUpdateFormat(f)}
+                                className={`px-3 py-1 text-[10px] font-medium rounded-md transition-colors ${post.format === f ? 'bg-indigo-600 text-white' : 'text-neutral-400 hover:text-white'}`}>
+                                {f === 'square' ? '1:1' : f === 'portrait' ? '4:5' : '9:16'}
+                            </button>
+                        ))}
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {onSave && (
-                            <button onClick={() => onSave(post)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#1a1a1a] hover:bg-[#262626] text-neutral-300 text-sm">
-                                <Save size={16} /> Salvar
-                            </button>
+                        {selectedElementId && (
+                            <>
+                                <button onClick={() => handleDuplicateElement(selectedElementId)}
+                                    className="w-8 h-8 rounded-lg bg-[#1a1a1a] flex items-center justify-center text-neutral-400 hover:text-white"><Copy size={14} /></button>
+                                <button onClick={() => handleDeleteElement(selectedElementId)}
+                                    className="w-8 h-8 rounded-lg bg-[#1a1a1a] flex items-center justify-center text-red-400 hover:text-red-300"><Trash2 size={14} /></button>
+                            </>
                         )}
-                    </div>
-                </div>
-
-                {/* Canvas Scroller */}
-                <div className="flex-1 overflow-auto flex items-center justify-center p-12 relative" onClick={() => setSelectedElementId(null)}>
-
-                    {/* The Actual Canvas */}
-                    <div
-                        ref={canvasRef}
-                        style={{
-                            width: post.format === 'story' ? 1080 : 1080,
-                            height: post.format === 'square' ? 1080 : post.format === 'portrait' ? 1350 : 1920,
-                            transform: `scale(${scale})`,
-                            transformOrigin: 'center center',
-                            boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
-                        }}
-                        className="bg-[#121212] relative overflow-hidden transition-all duration-300"
-                    >
-                        {/* Render Elements for Current Slide */}
-                        {currentSlide.elements.map(el => renderElement(el, true))}
-                    </div>
-
-                </div>
-
-                {/* Bottom Bar - Carousel Navigation */}
-                <div className="h-16 border-t border-[#262626] bg-[#0a0a0a] flex items-center justify-center gap-4 z-10">
-                    {post.slides.map((s, idx) => (
-                        <div
-                            key={s.id}
-                            onClick={() => setCurrentSlideIndex(idx)}
-                            className={`relative w-10 h-10 rounded-md border-2 cursor-pointer transition-all ${currentSlideIndex === idx ? 'border-indigo-500 scale-110' : 'border-[#333] hover:border-neutral-500'}`}
-                        >
-                            <div className="absolute inset-0 flex items-center justify-center text-xs text-neutral-500 font-bold">
-                                {idx + 1}
-                            </div>
+                        {onSave && (
+                            <button onClick={() => { onSave(post); showToast('Salvo!', 'success'); }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1a1a1a] hover:bg-[#262626] text-neutral-300 text-xs"><Save size={14} /> Salvar</button>
+                        )}
+                        <div className="relative">
+                            <button onClick={() => setShowExportMenu(!showExportMenu)}
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${showExportMenu ? 'bg-indigo-500 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'}`}>
+                                {isExporting ? <span className="animate-spin text-xs">⏳</span> : <Download size={14} />}
+                            </button>
+                            {showExportMenu && (
+                                <div className="absolute top-10 right-0 w-44 bg-[#1a1a1a] border border-[#333] rounded-xl shadow-2xl p-3 z-50 space-y-3">
+                                    <div className="grid grid-cols-3 gap-1">
+                                        {(['png', 'jpeg', 'pdf'] as const).map(f => (
+                                            <button key={f} onClick={() => setExportFormat(f)}
+                                                className={`py-1 rounded text-[10px] font-medium ${exportFormat === f ? 'bg-indigo-500 text-white' : 'bg-[#222] text-neutral-400'}`}>{f.toUpperCase()}</button>
+                                        ))}
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-1">
+                                        {[1, 2, 3].map(s => (
+                                            <button key={s} onClick={() => setExportScale(s)}
+                                                className={`py-1 rounded text-[10px] font-medium ${exportScale === s ? 'bg-indigo-500 text-white' : 'bg-[#222] text-neutral-400'}`}>{s}x</button>
+                                        ))}
+                                    </div>
+                                    <button onClick={exportPost} disabled={isExporting}
+                                        className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold">
+                                        {isExporting ? 'Processando...' : 'Baixar'}
+                                    </button>
+                                </div>
+                            )}
                         </div>
+                    </div>
+                </div>
+
+                {/* Canvas Area */}
+                <div ref={canvasWrapperRef} className="flex-1 overflow-auto flex items-center justify-center relative"
+                    onClick={() => setSelectedElementId(null)}>
+
+                    {/* Snap guides */}
+                    {snapLines.map((line, i) => (
+                        <div key={i} className="absolute z-[90] bg-pink-500"
+                            style={line.axis === 'x'
+                                ? { left: (canvasRef.current?.getBoundingClientRect().left || 0) + line.pos * scale, top: canvasRef.current?.getBoundingClientRect().top, width: 1, height: canvasH * scale }
+                                : { left: canvasRef.current?.getBoundingClientRect().left, top: (canvasRef.current?.getBoundingClientRect().top || 0) + line.pos * scale, width: canvasW * scale, height: 1 }}
+                        />
                     ))}
 
-                    <button
-                        onClick={handleAddSlide}
-                        className="w-10 h-10 rounded-md border border-dashed border-[#333] flex items-center justify-center text-neutral-500 hover:text-indigo-400 hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all"
-                    >
-                        <Plus size={18} />
+                    <div ref={canvasRef}
+                        style={{
+                            width: canvasW, height: canvasH,
+                            transform: `scale(${scale})`, transformOrigin: 'center center',
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+                            backgroundColor: currentSlide?.styles?.backgroundColor || '#121212',
+                            background: currentSlide?.styles?.background || currentSlide?.styles?.backgroundColor || '#121212',
+                        }}
+                        className="relative overflow-hidden transition-all duration-200">
+                        {currentSlide?.elements.map(el => renderElement(el, true))}
+                    </div>
+                </div>
+
+                {/* Bottom - Slide Navigation */}
+                <div className="h-14 border-t border-[#262626] bg-[#0a0a0a] flex items-center justify-center gap-3 z-10">
+                    {post.slides.map((s, idx) => (
+                        <div key={s.id} onClick={() => setCurrentSlideIndex(idx)}
+                            className={`relative w-10 h-10 rounded-lg border-2 cursor-pointer transition-all flex items-center justify-center
+                            ${currentSlideIndex === idx ? 'border-indigo-500 scale-110 bg-indigo-500/10' : 'border-[#333] hover:border-neutral-500 bg-[#1a1a1a]'}`}>
+                            <span className="text-[10px] text-neutral-400 font-bold">{idx + 1}</span>
+                            {post.slides.length > 1 && currentSlideIndex === idx && (
+                                <button onClick={e => { e.stopPropagation(); handleDeleteSlide(idx); }}
+                                    className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                                    <X size={8} className="text-white" />
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                    <button onClick={handleAddSlide}
+                        className="w-10 h-10 rounded-lg border border-dashed border-[#333] flex items-center justify-center text-neutral-500 hover:text-indigo-400 hover:border-indigo-500/50 transition-all">
+                        <Plus size={16} />
                     </button>
                 </div>
-
             </div>
 
-            {/* 3. RIGHT SIDEBAR - PROPERTY PANEL (Contextual) */}
+            {/* RIGHT - Property Panel */}
             <div className="w-72 border-l border-[#262626] bg-[#0a0a0a] flex flex-col overflow-y-auto z-20">
-                <div className="p-4 border-b border-[#262626]">
-                    <h3 className="font-semibold text-sm text-neutral-300 uppercase tracking-wider">Propriedades</h3>
+                <div className="p-3 border-b border-[#262626]">
+                    <h3 className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                        {selectedElement ? `${selectedElement.type}` : 'Propriedades do Slide'}
+                    </h3>
                 </div>
-
-                {selectedElement ? (
-                    <div className="p-4 space-y-6">
-
-                        {/* Common Props */}
-                        <div className="space-y-2">
-                            <label className="text-xs text-neutral-500">ID</label>
-                            <div className="text-sm text-neutral-300 font-mono bg-[#1a1a1a] p-2 rounded">{selectedElement.id}</div>
-                        </div>
-
-                        {selectedElement.type === 'TextOverlay' && (
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs text-neutral-500">Texto</label>
-                                    <textarea
-                                        value={selectedElement.props.text}
-                                        onChange={(e) => handleUpdateElement(selectedElement.id, { props: { ...selectedElement.props, text: e.target.value } })}
-                                        className="w-full bg-[#1a1a1a] border border-[#333] rounded p-2 text-sm text-white focus:border-indigo-500 outline-none"
-                                        rows={3}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs text-neutral-500">Tipo</label>
-                                    <select
-                                        value={selectedElement.props.variant}
-                                        onChange={(e) => handleUpdateElement(selectedElement.id, { props: { ...selectedElement.props, variant: e.target.value } })}
-                                        className="w-full bg-[#1a1a1a] border border-[#333] rounded p-2 text-sm text-white focus:border-indigo-500 outline-none"
-                                    >
-                                        <option value="h1">Título (H1)</option>
-                                        <option value="h2">Subtítulo (H2)</option>
-                                        <option value="p">Parágrafo</option>
-                                        <option value="button">Botão</option>
-                                    </select>
-                                </div>
-                            </div>
-                        )}
-
-                        {(selectedElement.type === 'ImageOverlay' || (selectedElement.type === 'Shape' && selectedElement.props.backgroundImage)) && (
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs text-neutral-500">URL da Imagem</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={selectedElement.props.src || selectedElement.props.backgroundImage || ''}
-                                            onChange={(e) => handleUpdateElement(selectedElement.id, { props: { ...selectedElement.props, src: e.target.value } })}
-                                            className="flex-1 bg-[#1a1a1a] border border-[#333] rounded p-2 text-xs text-white focus:border-indigo-500 outline-none"
-                                            placeholder="https://"
-                                        />
-                                    </div>
-                                    <p className="text-[10px] text-neutral-600">Cole uma URL do Unsplash ou do seu Cofre.</p>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-xs text-neutral-500">Opacidade</label>
-                                    <input
-                                        type="range"
-                                        min="0" max="1" step="0.1"
-                                        value={selectedElement.props.opacity ?? 1}
-                                        onChange={(e) => handleUpdateElement(selectedElement.id, { props: { ...selectedElement.props, opacity: parseFloat(e.target.value) } })}
-                                        className="w-full accent-indigo-500"
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Style Overrides */}
-                        <div className="space-y-4 pt-4 border-t border-[#262626]">
-                            <h4 className="text-xs font-semibold text-neutral-400">Estilos</h4>
-
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] text-neutral-500">Cor</label>
-                                    <div className="flex items-center gap-2">
-                                        <div
-                                            className="w-6 h-6 rounded border border-[#333]"
-                                            style={{ backgroundColor: selectedElement.styles?.color || selectedElement.styles?.backgroundColor || 'transparent' }}
-                                        />
-                                        <input
-                                            type="text"
-                                            value={selectedElement.styles?.color || ''}
-                                            onChange={(e) => handleUpdateElement(selectedElement.id, { styles: { ...selectedElement.styles, color: e.target.value } })}
-                                            className="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1 text-xs text-white"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] text-neutral-500">Tamanho Fonte</label>
-                                    <input
-                                        type="text"
-                                        value={selectedElement.styles?.fontSize || ''}
-                                        onChange={(e) => handleUpdateElement(selectedElement.id, { styles: { ...selectedElement.styles, fontSize: e.target.value } })}
-                                        className="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1 text-xs text-white"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-neutral-600 p-8 text-center">
-                        <Type size={32} className="mb-4 opacity-20" />
-                        <p className="text-sm">Selecione um elemento para editar</p>
-                    </div>
-                )}
+                <CanvasPropertyPanel
+                    element={selectedElement}
+                    onUpdate={handleUpdateElement}
+                    slideStyles={currentSlide?.styles}
+                    onUpdateSlide={handleUpdateSlideStyles}
+                />
             </div>
 
-            {/* HIDDEN RENDER CONTAINER FOR ZIP EXPORT */}
-            {/* This renders all slides at full resolution but hidden from user view */}
-            <div
-                ref={hiddenRenderRef}
-                style={{
-                    position: 'fixed',
-                    left: '-9999px',
-                    top: '-9999px',
-                    // Show all slides stacked or in row? Row is easier for debugging if needed, but stack is fine as we select by index children
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}
-            >
+            {/* Floating Toolbar */}
+            {selectedElement && (
+                <FloatingToolbar
+                    element={selectedElement}
+                    canvasRect={getCanvasRect()}
+                    scale={scale}
+                    onUpdate={handleUpdateElement}
+                    onDelete={handleDeleteElement}
+                />
+            )}
+
+            {/* Hidden render for export */}
+            <div ref={hiddenRenderRef} style={{ position: 'fixed', left: '-9999px', top: '-9999px', display: 'flex', flexDirection: 'column' }}>
                 {post.slides.map(slide => (
-                    <div
-                        key={slide.id}
-                        style={{
-                            width: post.format === 'story' ? 1080 : 1080,
-                            height: post.format === 'square' ? 1080 : post.format === 'portrait' ? 1350 : 1920,
-                            backgroundColor: '#121212', // Ensure bg is captured
-                            position: 'relative',
-                            overflow: 'hidden'
-                        }}
-                    >
+                    <div key={slide.id}
+                        style={{ width: canvasW, height: canvasH, backgroundColor: slide.styles?.backgroundColor || '#121212', background: slide.styles?.background || slide.styles?.backgroundColor || '#121212', position: 'relative', overflow: 'hidden' }}>
                         {slide.elements.map(el => renderElement(el, false))}
                     </div>
                 ))}
             </div>
-
         </div>
     );
 };

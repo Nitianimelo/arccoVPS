@@ -30,13 +30,13 @@ export const ArccoDrivePage: React.FC = () => {
     const loadFiles = async () => {
         setLoading(true);
         try {
-            const userId = localStorage.getItem('arcco_user_id');
-            if (!userId) {
+            const { data: { user } } = await driveService.getUser();
+            if (!user) {
                 setFiles([]);
                 setLoading(false);
                 return;
             }
-            const data = await driveService.listFiles(userId);
+            const data = await driveService.listFiles(user.id);
             setFiles(data);
         } catch (error) {
             console.error('Error loading files:', error);

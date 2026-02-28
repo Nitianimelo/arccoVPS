@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerFit - Transforme seu Corpo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff6b35;
+            --secondary: #0f172a;
+            --accent: #fbbf24;
+            --dark: #1e293b;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--secondary); }
+        h1, h2, h3, .display { font-family: 'Oswald', sans-serif; }
+        .energy-gradient {
+            background: linear-gradient(135deg, #ff6b35 0%, #fbbf24 50%, #fb923c 100%);
+        }
+        .energy-gradient-text {
+            background: linear-gradient(135deg, #ff6b35, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .neon-glow {
+            box-shadow: 0 0 30px rgba(255, 107, 53, 0.5);
+        }
+        .neon-glow-yellow {
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.5);
+        }
+        .glass-dark {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 107, 53, 0.2);
+        }
+        .card-3d {
+            transform-style: preserve-3d;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-3d:hover {
+            transform: translateY(-15px) rotateX(5deg) rotateY(-5deg);
+            box-shadow: -20px 20px 40px rgba(0, 0, 0, 0.4);
+        }
+        @keyframes pulse-fire {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        .pulse-fire { animation: pulse-fire 2s ease-in-out infinite; }
+        @keyframes float-energy {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-10px) rotate(2deg); }
+            50% { transform: translateY(-5px) rotate(-2deg); }
+            75% { transform: translateY(-15px) rotate(1deg); }
+        }
+        .float-energy { animation: float-energy 4s ease-in-out infinite; }
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(60px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .slide-up { animation: slide-up 0.8s ease-out forwards; }
+        .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+        .btn-energy {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-energy::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s;
+        }
+        .btn-energy:hover::before { left: 100%; }
+        .btn-energy:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 20px 40px -10px rgba(255, 107, 53, 0.6);
+        }
+        .stat-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            box-shadow: 20px 20px 60px #0a101a, -20px -20px 60px #283856;
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            height: 4px;
+            border-radius: 2px;
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-glass {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 107, 53, 0.1);
+        }
+        .hero-overlay {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.7) 50%, rgba(255, 107, 53, 0.2) 100%);
+        }
+        .diagonal-slice {
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+        }
+        .trainer-card {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .trainer-card:hover {
+            transform: translateY(-10px);
+        }
+        .trainer-card:hover .trainer-overlay {
+            opacity: 1;
+        }
+        .trainer-overlay {
+            opacity: 0;
+            transition: all 0.4s ease;
+            background: linear-gradient(to top, rgba(255, 107, 53, 0.9), transparent);
+        }
+        .class-icon {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-3d:hover .class-icon {
+            transform: rotateY(360deg);
+        }
+    </style>
+</head>
+<body class="text-white min-h-screen overflow-x-hidden">
+    <!-- Background Effects -->
+    <div class="fixed inset-0 pointer-events-none z-0">
+        <div class="absolute top-0 left-0 w-[500px] h-[500px] bg-[#ff6b35] rounded-full blur-[150px] opacity-10 pulse-fire"></div>
+        <div class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-[#fbbf24] rounded-full blur-[150px] opacity-10 pulse-fire" style="animation-delay: 1s;"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 nav-glass">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl energy-gradient flex items-center justify-center neon-glow">
+                    <i data-lucide="dumbbell" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <span class="display text-2xl font-bold tracking-wider">POWERFIT</span>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#modalidades" class="text-gray-300 hover:text-[#ff6b35] transition-colors font-medium">Modalidades</a>
+                <a href="#treinadores" class="text-gray-300 hover:text-[#ff6b35] transition-colors font-medium">Treinadores</a>
+                <a href="#planos" class="text-gray-300 hover:text-[#ff6b35] transition-colors font-medium">Planos</a>
+                <a href="#depoimentos" class="text-gray-300 hover:text-[#ff6b35] transition-colors font-medium">Depoimentos</a>
+            </div>
+            <button class="btn-energy px-8 py-3 rounded-xl font-bold tracking-wide flex items-center gap-2">
+                Começar Agora
+                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center relative overflow-hidden">
+        <div class="absolute inset-0 hero-overlay"></div>
+        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center relative z-10">
+            <div class="space-y-8">
+                <div class="inline-flex items-center gap-2 glass-dark px-5 py-2.5 rounded-full slide-up">
+                    <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                    <span class="text-sm font-medium">+500 alunos transformados este mês</span>
+                </div>
+                <h1 class="text-6xl md:text-8xl display font-bold leading-none slide-up" style="animation-delay: 0.1s;">
+                    TRANSFORME
+                    <span class="energy-gradient-text block">SEU CORPO</span>
+                </h1>
+                <p class="text-xl text-gray-300 leading-relaxed max-w-lg slide-up" style="animation-delay: 0.2s;">
+                    Treinos personalizados, equipamentos de ponta e uma comunidade que te motiva a ir além dos seus limites.
+                </p>
+                <div class="flex flex-wrap gap-4 slide-up" style="animation-delay: 0.3s;">
+                    <button class="btn-energy px-10 py-4 rounded-xl font-bold text-lg flex items-center gap-2">
+                        7 Dias Grátis
+                        <i data-lucide="flame" class="w-5 h-5"></i>
+                    </button>
+                    <button class="glass-dark px-10 py-4 rounded-xl font-bold flex items-center gap-2 hover:bg-white/10 transition-all">
+                        <i data-lucide="play-circle" class="w-5 h-5"></i>
+                        Ver Academia
+                    </button>
+                </div>
+                <div class="grid grid-cols-3 gap-6 pt-4 slide-up" style="animation-delay: 0.4s;">
+                    <div class="stat-card p-4 rounded-xl text-center">
+                        <p class="display text-3xl font-bold text-[#ff6b35]">5000+</p>
+                        <p class="text-sm text-gray-400">Alunos</p>
+                    </div>
+                    <div class="stat-card p-4 rounded-xl text-center">
+                        <p class="display text-3xl font-bold text-[#fbbf24]">50+</p>
+                        <p class="text-sm text-gray-400">Treinadores</p>
+                    </div>
+                    <div class="stat-card p-4 rounded-xl text-center">
+                        <p class="display text-3xl font-bold text-[#ff6b35]">24/7</p>
+                        <p class="text-sm text-gray-400">Aberto</p>
+                    </div>
+                </div>
+            </div>
+            <div class="relative">
+                <div class="card-3d relative z-10 float-energy">
+                    <div class="glass-dark rounded-3xl p-2 neon-glow">
+                        <img src="https://images.pexels.com/photos-1534438327276-14e5300c3a48" alt="Fitness" class="rounded-2xl w-full h-[500px] object-cover">
+                    </div>
+                </div>
+                <div class="absolute -bottom-8 -left-8 glass-dark rounded-2xl p-6 float-energy neon-glow-yellow" style="animation-delay: 0.5s;">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-xl energy-gradient flex items-center justify-center">
+                            <i data-lucide="trophy" class="w-8 h-8 text-white"></i>
+                        </div>
+                        <div>
+                            <p class="display text-xl font-bold">Melhor Academia</p>
+                            <p class="text-sm text-gray-400">Prêmio Fitness 2024</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modalidades -->
+    <section id="modalidades" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16 reveal">
+                <span class="inline-block px-5 py-2 rounded-full glass-dark text-[#ff6b35] text-sm font-bold mb-4">MODALIDADES</span>
+                <h2 class="text-5xl md:text-6xl display font-bold mb-4">ESCOLHA SEU <span class="energy-gradient-text">ESTILO</span></h2>
+                <p class="text-xl text-gray-400 max-w-2xl mx-auto">Opções para todos os níveis e objetivos</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="card-3d glass-dark rounded-3xl p-8 reveal">
+                    <div class="class-icon w-20 h-20 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center mb-6">
+                        <i data-lucide="flame" class="w-10 h-10 text-white"></i>
+                    </div>
+                    <h3 class="text-3xl display font-bold mb-3">HIIT</h3>
+                    <p class="text-gray-400 mb-6">Treinos intervalados de alta intensidade para queimar calorias e melhorar condicionamento.</p>
+                    <div class="flex items-center gap-2 text-[#ff6b35]">
+                        <i data-lucide="clock" class="w-5 h-5"></i>
+                        <span class="font-medium">45 min por sessão</span>
+                    </div>
+                </div>
+                <div class="card-3d glass-dark rounded-3xl p-8 reveal" style="transition-delay: 0.1s;">
+                    <div class="class-icon w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-6">
+                        <i data-lucide="dumbbell" class="w-10 h-10 text-white"></i>
+                    </div>
+                    <h3 class="text-3xl display font-bold mb-3">Musculação</h3>
+                    <p class="text-gray-400 mb-6">Treinos personalizados para ganho de massa, definição e força com profissionais especializados.</p>
+                    <div class="flex items-center gap-2 text-[#fbbf24]">
+                        <i data-lucide="clock" class="w-5 h-5"></i>
+                        <span class="font-medium">60-90 min por sessão</span>
+                    </div>
+                </div>
+                <div class="card-3d glass-dark rounded-3xl p-8 reveal" style="transition-delay: 0.2s;">
+                    <div class="class-icon w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-6">
+                        <i data-lucide="activity" class="w-10 h-10 text-white"></i>
+                    </div>
+                    <h3 class="text-3xl display font-bold mb-3">CrossFit</h3>
+                    <p class="text-gray-400 mb-6">Treinos funcionais desafiadores que combinam força, resistência e agilidade.</p>
+                    <div class="flex items-center gap-2 text-[#ff6b35]">
+                        <i data-lucide="clock" class="w-5 h-5"></i>
+                        <span class="font-medium">60 min por sessão</span>
+                    </div>
+                </div>
+                <div class="card-3d glass-dark rounded-3xl p-8 reveal">
+                    <div class="class-icon w-20 h-20 rounded-2xl bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center mb-6">
+                        <i data-lucide="heart" class="w-10 h-10 text-white"></i>
+                    </div>
+                    <h3 class="text-3xl display font-bold mb-3">Spinning</h3>
+                    <p class="text-gray-400 mb-6">Aulas dinâmicas em bicicleta indoor com música energética e motivação constante.</p>
+                    <div class="flex items-center gap-2 text-[#ff6b35]">
+                        <i data-lucide="clock" class="w-5 h-5"></i>
+                        <span class="font-medium">45 min por sessão</span>
+                    </div>
+                </div>
+                <div class="card-3d glass-dark rounded-3xl p-8 reveal" style="transition-delay: 0.1s;">
+                    <div class="class-icon w-20 h-20 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center mb-6">
+                        <i data-lucide="yoga" class="w-10 h-10 text-white"></i>
+                    </div>
+                    <h3 class="text-3xl display font-bold mb-3">Yoga</h3>
+                    <p class="text-gray-400 mb-6">Práticas para equilibrar corpo e mente, melhorar flexibilidade e reduzir estresse.</p>
+                    <div class="flex items-center gap-2 text-[#fbbf24]">
+                        <i data-lucide="clock" class="w-5 h-5"></i>
+                        <span class="font-medium">60 min por sessão</span>
+                    </div>
+                </div>
+                <div class="card-3d glass-dark rounded-3xl p-8 reveal" style="transition-delay: 0.2s;">
+                    <div class="class-icon w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center mb-6">
+                        <i data-lucide="users" class="w-10 h-10 text-white"></i>
+                    </div>
+                    <h3 class="text-3xl display font-bold mb-3">Boxe</h3>
+                    <p class="text-gray-400 mb-6">Aulas de boxe para aprendizado técnico, condicionamento e auto-defesa.</p>
+                    <div class="flex items-center gap-2 text-[#ff6b35]">
+                        <i data-lucide="clock" class="w-5 h-5"></i>
+                        <span class="font-medium">60 min por sessão</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trainers -->
+    <section id="treinadores" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16 reveal">
+                <span class="inline-block px-5 py-2 rounded-full glass-dark text-[#fbbf24] text-sm font-bold mb-4">TREINADORES</span>
+                <h2 class="text-5xl md:text-6xl display font-bold mb-4">NOSSOS <span class="energy-gradient-text">ESPECIALISTAS</span></h2>
+            </div>
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="trainer-card rounded-3xl overflow-hidden relative reveal">
+                    <img src="https://images.pexels.com/photos-1954524" alt="Trainer" class="w-full h-[350px] object-cover">
+                    <div class="trainer-overlay absolute inset-0 flex flex-col justify-end p-6">
+                        <h4 class="text-2xl display font-bold">Carlos Silva</h4>
+                        <p class="text-[#fbbf24] font-medium">Musculação</p>
+                    </div>
+                </div>
+                <div class="trainer-card rounded-3xl overflow-hidden relative reveal" style="transition-delay: 0.1s;">
+                    <img src="https://images.pexels.com.photos-1534528741775-53994a69daeb" alt="Trainer" class="w-full h-[350px] object-cover">
+                    <div class="trainer-overlay absolute inset-0 flex flex-col justify-end p-6">
+                        <h4 class="text-2xl display font-bold">Ana Costa</h4>
+                        <p class="text-[#ff6b35] font-medium">CrossFit</p>
+                    </div>
+                </div>
+                <div class="trainer-card rounded-3xl overflow-hidden relative reveal" style="transition-delay: 0.2s;">
+                    <img src="https://images.pexels.com.photos-1571019613456-1cb2f99b2d8b" alt="Trainer" class="w-full h-[350px] object-cover">
+                    <div class="trainer-overlay absolute inset-0 flex flex-col justify-end p-6">
+                        <h4 class="text-2xl display font-bold">Lucas Mendes</h4>
+                        <p class="text-[#fbbf24] font-medium">Boxe</p>
+                    </div>
+                </div>
+                <div class="trainer-card rounded-3xl overflow-hidden relative reveal" style="transition-delay: 0.3s;">
+                    <img src="https://images.pexels.com.photos-1599058917213-d1b7a64ba424" alt="Trainer" class="w-full h-[350px] object-cover">
+                    <div class="trainer-overlay absolute inset-0 flex flex-col justify-end p-6">
+                        <h4 class="text-2xl display font-bold">Julia Santos</h4>
+                        <p class="text-[#ff6b35] font-medium">Yoga</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Plans -->
+    <section id="planos" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16 reveal">
+                <span class="inline-block px-5 py-2 rounded-full glass-dark text-[#ff6b35] text-sm font-bold mb-4">PLANOS</span>
+                <h2 class="text-5xl md:text-6xl display font-bold mb-4">INVISTA EM <span class="energy-gradient-text">VOCÊ</span></h2>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass-dark rounded-3xl p-8 reveal">
+                    <h3 class="text-3xl display font-bold mb-2">BÁSICO</h3>
+                    <div class="flex items-baseline gap-2 mb-6">
+                        <span class="text-5xl display font-bold text-white">R$ 129</span>
+                        <span class="text-gray-400">/mês</span>
+                    </div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3">
+                            <i data-lucide="check" class="w-5 h-5 text-[#ff6b35]"></i>
+                            <span>Acesso ilimitado (6h-22h)</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i data-lucide="check" class="w-5 h-5 text-[#ff6b35]"></i>
+                            <span>Todas as modalidades</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i data-lucide="check" class="w-5 h-5 text-[#ff6b35]"></i>
+                            <span>Avaliação física inicial</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i data-lucide="check" class="w-5 h-5 text-[#ff6b35]"></i>
+                            <span>2 aulas coletivas/mês</span>
+                        </li>
+                    </ul>
+                    <button class="w-full py-4 rounded-xl font-bold border-2 border-[#ff6b35] text-[#ff6b35] hover:bg-[#ff6b35] hover:text-white transition-all">
+                        Começar
+                    </button>
+                </div>
+                <div class="energy-gradient rounded-3xl p-8 relative transform scale-105 reveal" style="transition-delay: 0.1s;">
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-white text-[#ff6b35] px-6 py-2 rounded-full font-bold text-sm">
+                        MAIS POPULAR
+                    </div>
+                    <h3 class="text-3xl display font-bold text-white mb-2">PREMIUM</h3>
+                    <div class="flex items-baseline gap-2 mb-6">
+                        <span class="text-5xl display font-bold text-white">R$ 199</span>
+                        <span class="text-white/80">/mês</span>
+                    </div>
+                    <ul class="space-y-4 mb-8 text-white">
+                        <li class="flex items-center gap-3">
+                            <i data-lucide="check" class="w-5 h-5 text-white"></i>
+                            <span>Acesso 24/7</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i data-lucide="check" class="w-5 h-5 text-white"></i>
+                            <span>Todas as modalidades</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i data-lucide="check" class="w-5 h-5 text-white"></i>
+                            <span>Avaliação física mensal</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i data-lucide="check" class="w-5 h-5 text-white"></i>
+                            <span>Aulas coletivas ilimitadas</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i data-lucide="check" class="w-5 h-5 text-white"></i>
+                            <span>1 treino personalizado/mês</span>
+                        </li>
+                    </ul>
+                    <button class="w-full py-4 rounded-xl font-bold bg-white text-[#ff6b35] hover:bg-gray-100 transition-all">
+                        Começar
+                    </button>
+                </div>
+                <div class="glass-dark rounded-3xl p-8 reveal" style="transition-delay: 0.2s;">
+                    <h3 class="text-3xl display font-bold mb-2">ELITE</h3>
+                    <div class="flex items-baseline gap-2 mb-6">
+                        <span class="text-5xl display font-bold text-white">R$ 349</span>
+                        <span class="text-gray-400">/mês</span>
+                    </div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3">
+                            <i data-lucide="check" class="w-5 h-5 text-[#fbbf24]"></i>
+                            <span>Tudo do Premium</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i data-lucide="check" class="w-5 h-5 text-[#fbbf24]"></i>
+                            <span>Treinador exclusivo</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i data-lucide="check" class="w-5 h-5 text-[#fbbf24]"></i>
+                            <span>Plano nutricional</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i data-lucide="check" class="w-5 h-5 text-[#fbbf24]"></i>
+                            <span>Acesso ao spa/sauna</span>
+                        </li>
+                    </ul>
+                    <button class="w-full py-4 rounded-xl font-bold border-2 border-[#fbbf24] text-[#fbbf24] hover:bg-[#fbbf24] hover:text-white transition-all">
+                        Começar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-24 relative">
+        <div class="max-w-5xl mx-auto px-6">
+            <div class="energy-gradient rounded-3xl p-12 text-center relative overflow-hidden reveal">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                <div class="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full blur-3xl"></div>
+                <div class="relative z-10">
+                    <h2 class="text-4xl md:text-6xl display font-bold text-white mb-6">PRONTO PARA COMEÇAR?</h2>
+                    <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto">Transforme seu corpo e sua vida. Primeira semana é por nossa conta!</p>
+                    <button class="bg-white text-[#ff6b35] px-12 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all flex items-center gap-2 mx-auto">
+                        7 Dias Grátis
+                        <i data-lucide="rocket" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="glass-dark py-12 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-xl energy-gradient flex items-center justify-center">
+                    <i data-lucide="dumbbell" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="display text-2xl font-bold tracking-wider">POWERFIT</span>
+            </div>
+            <p class="text-gray-500">© 2024 PowerFit. Transforme-se.</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Reveal on scroll
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealOnScroll = () => {
+            revealElements.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                const windowHeight = window.innerHeight;
+                if (rect.top < windowHeight * 0.85) {
+                    el.classList.add('active');
+                }
+            });
+        };
+        window.addEventListener('scroll', revealOnScroll);
+        revealOnScroll();
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Button click effect
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => this.style.transform = '', 150);
+            });
+        });
+    </script>
+</body>
+</html>

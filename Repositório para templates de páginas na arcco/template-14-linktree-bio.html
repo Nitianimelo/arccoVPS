@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@seunome - Links</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .bio-card {
+            background: white;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .bio-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+        .bio-card:hover::before { transform: scaleX(1); }
+        .bio-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
+        }
+        .gradient-pink { --gradient: linear-gradient(90deg, #ff6b6b, #ee5a5a); }
+        .gradient-purple { --gradient: linear-gradient(90deg, #a855f7, #9333ea); }
+        .gradient-blue { --gradient: linear-gradient(90deg, #3b82f6, #2563eb); }
+        .gradient-green { --gradient: linear-gradient(90deg, #10b981, #059669); }
+        .gradient-orange { --gradient: linear-gradient(90deg, #f97316, #ea580c); }
+        .gradient-dark { --gradient: linear-gradient(90deg, #1a1a1a, #2d2d2d); }
+        .avatar-ring {
+            background: linear-gradient(135deg, #ff6b6b, #a855f7, #3b82f6);
+            padding: 4px;
+        }
+        @keyframes float-avatar {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .float-avatar { animation: float-avatar 4s ease-in-out infinite; }
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+        .pulse-ring { animation: pulse-ring 3s ease-in-out infinite; }
+        .social-btn {
+            transition: all 0.3s ease;
+        }
+        .social-btn:hover {
+            transform: translateY(-3px) scale(1.1);
+        }
+        .verified-badge {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
+    <div class="max-w-lg mx-auto px-4 py-8">
+        <!-- Profile Header -->
+        <div class="text-center mb-8">
+            <div class="relative inline-block float-avatar">
+                <div class="avatar-ring rounded-full">
+                    <div class="w-28 h-28 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 overflow-hidden">
+                        <img src="https://images.pexels.com/photos-1534528741775-53994a69daeb" alt="Avatar" class="w-full h-full object-cover">
+                    </div>
+                </div>
+                <div class="verified-badge absolute -bottom-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center">
+                    <i data-lucide="check" class="w-5 h-5 text-white"></i>
+                </div>
+            </div>
+            <h1 class="text-2xl font-bold mt-6 mb-1">@seunome</h1>
+            <p class="text-gray-600 text-sm">Creator | Entrepreneur | Content</p>
+            <p class="text-gray-500 text-sm mt-2 max-w-xs mx-auto">✨ Criando conteúdo inspirador | 🚀 Empreendedor | 💎 Lifestyle</p>
+
+            <!-- Social Links -->
+            <div class="flex justify-center gap-4 mt-6">
+                <a href="#" class="social-btn w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-700 hover:text-pink-500">
+                    <i data-lucide="instagram" class="w-5 h-5"></i>
+                </a>
+                <a href="#" class="social-btn w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-700 hover:text-purple-500">
+                    <i data-lucide="youtube" class="w-5 h-5"></i>
+                </a>
+                <a href="#" class="social-btn w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-700 hover:text-blue-500">
+                    <i data-lucide="twitter" class="w-5 h-5"></i>
+                </a>
+                <a href="#" class="social-btn w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-700 hover:text-green-500">
+                    <i data-lucide="globe" class="w-5 h-5"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Link Cards -->
+        <div class="space-y-4">
+            <!-- Featured Link -->
+            <a href="#" class="bio-card rounded-2xl p-5 flex items-center gap-4 gradient-pink">
+                <div class="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="shopping-bag" class="w-6 h-6 text-white"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-white">🔥 OFERTA ESPECIAL</h3>
+                    <p class="text-white/80 text-sm">50% OFF por tempo limitado!</p>
+                </div>
+                <i data-lucide="arrow-right" class="w-5 h-5 text-white"></i>
+            </a>
+
+            <!-- YouTube -->
+            <a href="#" class="bio-card rounded-2xl p-5 flex items-center gap-4 gradient-purple">
+                <div class="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="youtube" class="w-6 h-6 text-white"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-white">YouTube</h3>
+                    <p class="text-white/80 text-sm">+500k inscritos • Novo vídeo semanal</p>
+                </div>
+                <i data-lucide="arrow-right" class="w-5 h-5 text-white"></i>
+            </a>
+
+            <!-- Website -->
+            <a href="#" class="bio-card rounded-2xl p-5 flex items-center gap-4 gradient-blue">
+                <div class="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="globe" class="w-6 h-6 text-white"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-white">Meu Site</h3>
+                    <p class="text-white/80 text-sm">Blog, portfolio e muito mais</p>
+                </div>
+                <i data-lucide="arrow-right" class="w-5 h-5 text-white"></i>
+            </a>
+
+            <!-- Course -->
+            <a href="#" class="bio-card rounded-2xl p-5 flex items-center gap-4 gradient-green">
+                <div class="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="graduation-cap" class="w-6 h-6 text-white"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-white">Meu Curso</h3>
+                    <p class="text-white/80 text-sm">Aprenda comigo - 20% OFF</p>
+                </div>
+                <i data-lucide="arrow-right" class="w-5 h-5 text-white"></i>
+            </a>
+
+            <!-- Patreon -->
+            <a href="#" class="bio-card rounded-2xl p-5 flex items-center gap-4 gradient-orange">
+                <div class="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="heart" class="w-6 h-6 text-white"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-white">Apoie no Patreon</h3>
+                    <p class="text-white/80 text-sm">Conteúdo exclusivo para membros</p>
+                </div>
+                <i data-lucide="arrow-right" class="w-5 h-5 text-white"></i>
+            </a>
+
+            <!-- Spotify -->
+            <a href="#" class="bio-card rounded-2xl p-5 flex items-center gap-4 gradient-dark">
+                <div class="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="music" class="w-6 h-6 text-white"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-white">Minha Playlist</h3>
+                    <p class="text-white/80 text-sm">Spotify - 100+ músicas</p>
+                </div>
+                <i data-lucide="arrow-right" class="w-5 h-5 text-white"></i>
+            </a>
+
+            <!-- Telegram -->
+            <a href="#" class="bio-card rounded-2xl p-5 flex items-center gap-4">
+                <div class="w-14 h-14 rounded-xl bg-[#0088cc] flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="send" class="w-6 h-6 text-white"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-gray-800">Telegram</h3>
+                    <p class="text-gray-500 text-sm">Canal de notícias e atualizações</p>
+                </div>
+                <i data-lucide="arrow-right" class="w-5 h-5 text-gray-400"></i>
+            </a>
+
+            <!-- WhatsApp -->
+            <a href="#" class="bio-card rounded-2xl p-5 flex items-center gap-4">
+                <div class="w-14 h-14 rounded-xl bg-[#25D366] flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="message-circle" class="w-6 h-6 text-white"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-gray-800">WhatsApp</h3>
+                    <p class="text-gray-500 text-sm">Contato direto - Respondo rápido</p>
+                </div>
+                <i data-lucide="arrow-right" class="w-5 h-5 text-gray-400"></i>
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-12">
+            <p class="text-gray-400 text-sm mb-4">Feito com ❤️ usando Linktree</p>
+            <a href="#" class="text-gray-500 hover:text-gray-700 text-sm flex items-center justify-center gap-2">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                Crie seu próprio
+            </a>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

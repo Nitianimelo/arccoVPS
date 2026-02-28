@@ -1,0 +1,406 @@
+{
+  "repository": "Arcco Template Factory - Landing Pages",
+  "version": "2.0",
+  "created_at": "2024-02-27",
+  "total_templates": 20,
+  "description": "Templates de landing pages com encantamento visual para uso automático por agentes de criação de páginas. Inclui 20 templates variados com estilos dark, light, e especializados.",
+
+  "templates": [
+    {
+      "id": "01",
+      "filename": "template-01-clinica-estetica.html",
+      "name": "Lumina Clinic",
+      "niche": "Clínica de Estética",
+      "page_type": "Landing Page",
+      "visual_style": {
+        "style": "Glassmorphism + Mesh Gradients",
+        "primary_color": "#c4a47c",
+        "secondary_color": "#2d3436",
+        "accent_color": "#f8e1d6",
+        "palette_type": "Warm/Golden",
+        "background_type": "Mesh Gradient Animation",
+        "mode": "Light"
+      }
+    },
+    {
+      "id": "02",
+      "filename": "template-02-tech-startup.html",
+      "name": "NexusAI",
+      "niche": "Tech Startup / SaaS",
+      "page_type": "Landing Page",
+      "visual_style": {
+        "style": "Neomorphism + Dark Mode",
+        "primary_color": "#6366f1",
+        "secondary_color": "#8b5cf6",
+        "accent_color": "#06b6d4",
+        "palette_type": "Cyber/Tech",
+        "background_type": "Dark with Grid Pattern",
+        "mode": "Dark"
+      }
+    },
+    {
+      "id": "03",
+      "filename": "template-03-restaurant-gourmet.html",
+      "name": "Bella Cucina",
+      "niche": "Restaurante Gourmet",
+      "page_type": "Landing Page",
+      "visual_style": {
+        "style": "Parallax + Elegant Typography",
+        "primary_color": "#c5a065",
+        "secondary_color": "#2c1810",
+        "accent_color": "#8b4513",
+        "palette_type": "Warm/Earthy",
+        "background_type": "Parallax Hero Image",
+        "mode": "Light"
+      }
+    },
+    {
+      "id": "04",
+      "filename": "template-04-fitness-academy.html",
+      "name": "PowerFit",
+      "niche": "Fitness Academy",
+      "page_type": "Landing Page",
+      "visual_style": {
+        "style": "Energy + 3D Card Effects",
+        "primary_color": "#ff6b35",
+        "secondary_color": "#fbbf24",
+        "accent_color": "#0f172a",
+        "palette_type": "Vibrant/Energetic",
+        "background_type": "Dark with Glowing Orbs",
+        "mode": "Dark"
+      }
+    },
+    {
+      "id": "05",
+      "filename": "template-05-interior-design.html",
+      "name": "Atelier Design",
+      "niche": "Interior Design",
+      "page_type": "Landing Page",
+      "visual_style": {
+        "style": "Minimalism + White Space",
+        "primary_color": "#d4a574",
+        "secondary_color": "#2a2a2a",
+        "accent_color": "#8b7355",
+        "palette_type": "Neutral/Earthy",
+        "background_type": "Light Cream (#faf9f7)",
+        "mode": "Light"
+      }
+    },
+    {
+      "id": "06",
+      "filename": "template-06-finance-app.html",
+      "name": "NovaFinance",
+      "niche": "Finance App / Fintech",
+      "page_type": "Landing Page",
+      "visual_style": {
+        "style": "Trust + Depth + Phone Mockup",
+        "primary_color": "#10b981",
+        "secondary_color": "#0f172a",
+        "accent_color": "#3b82f6",
+        "palette_type": "Trustworthy (Green/Blue)",
+        "background_type": "Light with Subtle Orbs",
+        "mode": "Light"
+      }
+    },
+    {
+      "id": "07",
+      "filename": "template-07-travel-agency.html",
+      "name": "Aventure",
+      "niche": "Travel Agency",
+      "page_type": "Landing Page",
+      "visual_style": {
+        "style": "Adventure + Parallax",
+        "primary_color": "#ff6b35",
+        "secondary_color": "#0f3460",
+        "accent_color": "#e94560",
+        "palette_type": "Vibrant/Tropical",
+        "background_type": "Parallax Hero with Overlay",
+        "mode": "Light"
+      }
+    },
+    {
+      "id": "08",
+      "filename": "template-08-education-platform.html",
+      "name": "EduTech",
+      "niche": "Education Platform",
+      "page_type": "Landing Page",
+      "visual_style": {
+        "style": "Learning + Progression",
+        "primary_color": "#6366f1",
+        "secondary_color": "#8b5cf6",
+        "accent_color": "#a855f7",
+        "palette_type": "Knowledge (Purple/Indigo)",
+        "background_type": "Light with Floating Orbs",
+        "mode": "Light"
+      }
+    },
+    {
+      "id": "09",
+      "filename": "template-09-fashion-ecommerce.html",
+      "name": "ELARA",
+      "niche": "Fashion E-commerce",
+      "page_type": "Landing Page",
+      "visual_style": {
+        "style": "Luxury + Sophistication",
+        "primary_color": "#1a1a1a",
+        "secondary_color": "#f5f0eb",
+        "accent_color": "#c9a96e",
+        "palette_type": "Black & Gold",
+        "background_type": "Light Cream (#f5f0eb)",
+        "mode": "Light"
+      }
+    },
+    {
+      "id": "10",
+      "filename": "template-10-health-wellness.html",
+      "name": "Serenity",
+      "niche": "Health & Wellness",
+      "page_type": "Landing Page",
+      "visual_style": {
+        "style": "Serenity + Harmony",
+        "primary_color": "#7cb342",
+        "secondary_color": "#33691e",
+        "accent_color": "#aed581",
+        "palette_type": "Natural/Green",
+        "background_type": "Sage Green (#f1f8e9) com Falling Leaves",
+        "mode": "Light"
+      }
+    },
+    {
+      "id": "11",
+      "filename": "template-11-lead-capture.html",
+      "name": "Converte+",
+      "niche": "Coleta de Leads",
+      "page_type": "Formulário de Cadastro",
+      "visual_style": {
+        "style": "Dark + Neon Glow",
+        "primary_color": "#00ff88",
+        "secondary_color": "#0a0a0a",
+        "accent_color": "#00d4ff",
+        "palette_type": "Neon/Cyber",
+        "background_type": "Dark with Grid Pattern + Orbs",
+        "mode": "Dark",
+        "features": ["Lead capture form", "Trust badges", "Success animations", "Phone mockup"]
+      }
+    },
+    {
+      "id": "12",
+      "filename": "template-12-ecommerce-catalog.html",
+      "name": "NOIR",
+      "niche": "Catálogo E-commerce",
+      "page_type": "Catálogo de Produtos",
+      "visual_style": {
+        "style": "Luxury Dark + Sophistication",
+        "primary_color": "#1a1a1a",
+        "secondary_color": "#f5f0eb",
+        "accent_color": "#c9a96e",
+        "palette_type": "Black & Gold on Light",
+        "background_type": "Light Cream (#f5f0eb)",
+        "mode": "Light",
+        "features": ["Product cards", "Category filters", "Price badges", "Quick view buttons"]
+      }
+    },
+    {
+      "id": "13",
+      "filename": "template-13-institutional.html",
+      "name": "NEXUS",
+      "niche": "Site Institucional",
+      "page_type": "Site Institucional",
+      "visual_style": {
+        "style": "Dark Tech + Corporate",
+        "primary_color": "#0066ff",
+        "secondary_color": "#0a0e27",
+        "accent_color": "#00d4ff",
+        "palette_type": "Corporate Blue",
+        "background_type": "Dark with Tech Grid + Glowing Orbs",
+        "mode": "Dark",
+        "features": ["Corporate stats", "Services cards", "Values section", "Trust elements"]
+      }
+    },
+    {
+      "id": "14",
+      "filename": "template-14-linktree-bio.html",
+      "name": "Bio Linktree Style",
+      "niche": "Bio de Instagram",
+      "page_type": "Linktree Clone",
+      "visual_style": {
+        "style": "Colorful + Gradient Cards",
+        "primary_color": "#ff6b6b",
+        "secondary_color": "#a855f7",
+        "accent_color": "#3b82f6",
+        "palette_type": "Multi-gradient",
+        "background_type": "Gradient Background (Pink/Purple/Blue/Green)",
+        "mode": "Light",
+        "features": ["Avatar with verified badge", "Social links", "Gradient cards", "Featured link"]
+      }
+    },
+    {
+      "id": "15",
+      "filename": "template-15-disclaimer-terms.html",
+      "name": "Disclaimer / Termos",
+      "niche": "Página de Termos",
+      "page_type": "Disclaimer/Legal",
+      "visual_style": {
+        "style": "Clean + Minimal",
+        "primary_color": "#1a1a1a",
+        "secondary_color": "#f3f4f6",
+        "accent_color": "#2563eb",
+        "palette_type": "Monochrome",
+        "background_type": "Light Gray (#f8f9fa)",
+        "mode": "Light",
+        "features": ["Section cards", "Warning banner", "Accept button", "Legal content"]
+      }
+    },
+    {
+      "id": "16",
+      "filename": "template-16-dynamic-sidebar.html",
+      "name": "CodeHub",
+      "niche": "Documentação Dinâmica",
+      "page_type": "Página Dinâmica",
+      "visual_style": {
+        "style": "Dark + Sidebar Lateral",
+        "primary_color": "#00d4ff",
+        "secondary_color": "#0d1117",
+        "accent_color": "#58a6ff",
+        "palette_type": "Dev Blue",
+        "background_type": "Dark with Fixed Sidebar + Grid Background",
+        "mode": "Dark",
+        "features": ["Fixed sidebar navigation", "Search bar", "Code blocks", "Features grid"]
+      }
+    },
+    {
+      "id": "17",
+      "filename": "template-17-app-landing.html",
+      "name": "TaskFlow",
+      "niche": "Landing Page de App",
+      "page_type": "App Landing Page",
+      "visual_style": {
+        "style": "Dark + App Mockup",
+        "primary_color": "#6366f1",
+        "secondary_color": "#0f0f23",
+        "accent_color": "#8b5cf6",
+        "palette_type": "App Purple",
+        "background_type": "Dark with Glowing Orbs",
+        "mode": "Dark",
+        "features": ["Phone app mockup", "Task list preview", "Download buttons", "Star ratings"]
+      }
+    },
+    {
+      "id": "18",
+      "filename": "template-18-minimal-catalog.html",
+      "name": "LUNA",
+      "niche": "Catálogo Minimal",
+      "page_type": "Catálogo de Produtos",
+      "visual_style": {
+        "style": "Minimal + Clean",
+        "primary_color": "#1a1a1a",
+        "secondary_color": "#fafafa",
+        "accent_color": null,
+        "palette_type": "Black on White",
+        "background_type": "Pure White",
+        "mode": "Light",
+        "features": ["Minimal cards", "Quick view on hover", "Category pills", "Simple typography"]
+      }
+    },
+    {
+      "id": "19",
+      "filename": "template-19-premium-signup.html",
+      "name": "PRIME",
+      "niche": "Formulário de Cadastro Premium",
+      "page_type": "Signup Form",
+      "visual_style": {
+        "style": "Premium Dark + Gold Accents",
+        "primary_color": "#00d9ff",
+        "secondary_color": "#0a0a0a",
+        "accent_color": "#ffd700",
+        "palette_type": "Dark with Gold",
+        "background_type": "Dark with Glowing Orbs",
+        "mode": "Dark",
+        "features": ["Step indicators", "Premium badge", "Plan selection", "Terms checkbox"]
+      }
+    },
+    {
+      "id": "20",
+      "filename": "template-20-launch-cyberpunk.html",
+      "name": "CYBER-X",
+      "niche": "Página de Lançamento",
+      "page_type": "Landing Page de Lançamento",
+      "visual_style": {
+        "style": "Dark Cyberpunk + Glitch Effects",
+        "primary_color": "#ff00ff",
+        "secondary_color": "#0a0a0f",
+        "accent_color": "#00ffff",
+        "palette_type": "Neon (Pink/Cyan/Green)",
+        "background_type": "Dark Cyber with Grid + Particles",
+        "mode": "Dark",
+        "features": ["Countdown timer", "Glitch text effect", "Neon borders", "Scan line animation", "Cyber typography"]
+      }
+    }
+  ],
+
+  "templates_by_mode": {
+    "dark": ["02", "04", "11", "13", "16", "17", "19", "20"],
+    "light": ["01", "03", "05", "06", "07", "08", "09", "10", "12", "14", "15", "18"],
+    "dark_count": 8,
+    "light_count": 12
+  },
+
+  "templates_by_type": {
+    "landing_page": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "13", "17", "20"],
+    "catalog": ["12", "18"],
+    "signup_form": ["11", "19"],
+    "disclaimer": ["15"],
+    "linktree": ["14"],
+    "institutional": ["13"],
+    "app_landing": ["17"],
+    "documentation": ["16"],
+    "launch": ["20"]
+  },
+
+  "visual_styles_summary": {
+    "glassmorphism": {
+      "templates": ["01", "06", "11", "12", "19"],
+      "description": "backdrop-filter: blur(), transparência, bordas sutis"
+    },
+    "neomorphism": {
+      "templates": ["02", "04"],
+      "description": "soft shadows, efeito 3D, dark mode"
+    },
+    "parallax": {
+      "templates": ["03", "07"],
+      "description": "background-attachment: fixed, efeito de profundidade"
+    },
+    "minimalism": {
+      "templates": ["05", "15", "18"],
+      "description": "espaço em branco, tipografia clean, sem excessos"
+    },
+    "neon_cyber": {
+      "templates": ["11", "13", "16", "19", "20"],
+      "description": "glow effects, cores neon, cyberpunk aesthetic"
+    },
+    "luxury": {
+      "templates": ["09", "12"],
+      "description": "black & gold, serif fonts, sofisticação"
+    },
+    "gradient_mesh": {
+      "templates": ["01", "10"],
+      "description": "mesh gradients animados, cores misturadas"
+    },
+    "colorful_gradient": {
+      "templates": ["14"],
+      "description": "múltiplas cores gradient, cards coloridos"
+    }
+  },
+
+  "quick_reference": {
+    "para_dark_mode": ["02", "04", "11", "13", "16", "17", "19", "20"],
+    "para_e_commerce": ["12", "18"],
+    "para_leads": ["11", "19"],
+    "para_institucional": ["13"],
+    "para_bio_social": ["14"],
+    "para_termos_disclaimer": ["15"],
+    "para_documentacao": ["16"],
+    "para_app_landing": ["17"],
+    "para_lancamento": ["20"]
+  }
+}

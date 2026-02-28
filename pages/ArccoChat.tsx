@@ -13,6 +13,7 @@ import { PostAST } from './arcco-pages/types/ast';
 import { useToast } from '../components/Toast';
 import AgentTerminal from '../components/AgentTerminal';
 import { chatStorage, ChatSession, Message } from '../lib/chatStorage';
+import { pexelsService } from '../lib/pexels';
 import { PostBuilder } from './arcco-pages/PostBuilder';
 
 interface FilePreviewCardProps {
@@ -130,17 +131,45 @@ const ArccoChatPage: React.FC<ArccoChatPageProps> = ({
   const thoughtsStartTimeRef = useRef<number>(0);
   const [previewData, setPreviewData] = useState<{ url?: string, filename: string, type: 'pdf' | 'excel' | 'code' | 'design' | 'other', content?: string, ast?: any } | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const pexelsUrlsRef = useRef<string[]>([]);
 
   const arccoEmblemUrl = "https://qscezcbpwvnkqoevulbw.supabase.co/storage/v1/object/public/Chipro%20calculadora/8.png";
 
   // Dynamic Greeting Logic
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Bom dia";
-    if (hour < 18) return "Boa tarde";
+    if (hour >= 5 && hour < 12) return "Bom dia";
+    if (hour >= 12 && hour < 18) return "Boa tarde";
     return "Boa noite";
   };
-  const [greetingTime, setGreetingTime] = useState(getGreeting());
+
+  const getSubtitle = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    const day = now.getDay(); // 0=Dom, 1=Seg, ..., 6=Sáb
+    const isWeekend = day === 0 || day === 6;
+
+    if (hour >= 5 && hour < 12) {
+      if (day === 1) return "Segunda-feira com energia! Como posso te ajudar hoje?";
+      if (day === 5) return "Sexta chegou! Vamos fechar a semana com tudo. O que fazemos?";
+      if (isWeekend) return "Fim de semana produtivo! O que vamos criar juntos?";
+      return "Mais um dia para criar algo incrível. Por onde começamos?";
+    }
+    if (hour >= 12 && hour < 18) {
+      if (day === 5) return "Tarde de sexta! Últimos sprints do dia. No que posso ajudar?";
+      if (isWeekend) return "Tarde de fim de semana! Em que posso ser útil?";
+      return "A tarde é boa para grandes ideias. O que resolvemos hoje?";
+    }
+    if (hour >= 18 && hour < 23) {
+      if (isWeekend) return "Boa noite! Ótima hora para criar algo memorável. Por onde vamos?";
+      return "Encerrando o dia ou só aquecendo? Pode contar comigo.";
+    }
+    return "Madrugada produtiva! O que faremos juntos?";
+  };
+
+  const firstName = userName.split(' ')[0];
+  const [greetingTime] = useState(getGreeting());
+  const [greetingSubtitle] = useState(getSubtitle());
 
   // Single Source of Truth: busca a chave do Supabase (tabela ApiKeys) a cada mount.
   // Se a chave já estiver injetada (ex: via App.tsx), apenas confirma o estado.
@@ -280,8 +309,41 @@ const ArccoChatPage: React.FC<ArccoChatPageProps> = ({
         });
       };
 
+      // ── Pexels: busca imagens se o usuário pediu algo visual ──────────────
+      let pexelsUrls: string[] = [];
+      const imageKeywords = /(imagem|image|foto|photo|design|post|banner|thumbnail|capa|visual|gato|cat|criar|gerar|animal|logo|paisagem)/i;
+      if (imageKeywords.test(text)) {
+        try {
+          // Extrai termos de busca — aceita palavras com 2+ letras
+          const stopWords = ['criar', 'gerar', 'fazer', 'quero', 'preciso', 'para', 'sobre', 'uma', 'com', 'que', 'post', 'banner', 'design', 'imagem', 'foto'];
+          const searchTerms = text
+            .replace(/[^a-zA-Z\u00e0-\u00fa\s]/g, '')
+            .split(/\s+/)
+            .filter(w => w.length > 1 && !stopWords.includes(w.toLowerCase()))
+            .slice(0, 4)
+            .join(' ');
+
+          const finalQuery = searchTerms || text.replace(/[^a-zA-Z\u00e0-\u00fa\s]/g, '').trim();
+          if (finalQuery) {
+            const result = await pexelsService.searchPhotos(finalQuery, { per_page: 3, orientation: 'landscape' });
+            pexelsUrls = result.photos.map(p => p.src.large);
+            pexelsUrlsRef.current = pexelsUrls;
+          }
+        } catch (e) {
+          console.warn('[Pexels] Search failed in chat:', e);
+        }
+      }
+
+      // Contrói bloco de URLs para o prompt
+      const pexelsBlock = pexelsUrls.length > 0
+        ? `\n\nIMPORTANTE — IMAGENS REAIS DISPONÍVEIS (USE OBRIGATORIAMENTE estas URLs no "src" dos ImageOverlay):
+${pexelsUrls.map((url, i) => `- Imagem ${i + 1}: ${url}`).join('\n')}
+NUNCA invente URLs de imagens. NUNCA use .png, .jpg ou nomes de arquivo inventados. Use APENAS as URLs acima.`
+        : `\nSe precisar de imagem, use: https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=1080`;
+
       const systemPrompt = `Você é um Cientista de Dados e Engenheiro de Software autônomo. Role: ${userPlan} user. Nome: ${userName}.
 Use markdown. Responda em PT-BR.
+${pexelsBlock}
 
 REGRAS PARA DESIGN E IMAGENS:
 Gere OBRIGATORIAMENTE um JSON (PostAST) no bloco \`\`\`json com esta estrutura exata:
@@ -296,7 +358,7 @@ Gere OBRIGATORIAMENTE um JSON (PostAST) no bloco \`\`\`json com esta estrutura e
 {
 "id": "bg-1",
 "type": "ImageOverlay",
-"props": { "src": "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1080&q=80", "opacity": 0.4 },
+"props": { "src": "${pexelsUrls[0] || 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=1080'}", "opacity": 0.4 },
 "styles": { "width": "100%", "height": "100%", "top": "0", "left": "0" }
 },
 {
@@ -310,7 +372,8 @@ Gere OBRIGATORIAMENTE um JSON (PostAST) no bloco \`\`\`json com esta estrutura e
 ]
 }
 \`\`\`
-Não adicione comentários. Utilize 'TextOverlay', 'ImageOverlay' ou 'Shape' para os types dos elements.`;
+Não adicione comentários. Utilize 'TextOverlay', 'ImageOverlay' ou 'Shape' para os types dos elements.
+REGRA ABSOLUTA: O campo "src" de todo ImageOverlay DEVE começar com "https://images.pexels.com/". NUNCA use URLs inventadas.`;
 
       let fullResponse = '';
       let terminalLogs = '';
@@ -398,7 +461,7 @@ Não adicione comentários. Utilize 'TextOverlay', 'ImageOverlay' ou 'Shape' par
   const handleSaveToVault = async (parsedDesign: PostAST) => {
     try {
       const title = parsedDesign.meta?.title || 'design';
-      const fileName = `${title.replace(/\s+/g, '_')}-${Date.now()}.json`;
+      const fileName = `${title.replace(/\s+/g, '_')} -${Date.now()}.json`;
       await driveService.saveArtifactReference(
         fileName,
         'post_ast',
@@ -434,7 +497,7 @@ Não adicione comentários. Utilize 'TextOverlay', 'ImageOverlay' ou 'Shape' par
       }
     } catch (err: any) {
       console.error('Erro no upload/extração:', err);
-      showToast(`Erro ao processar arquivo: ${err.message}`, 'error');
+      showToast(`Erro ao processar arquivo: ${err.message} `, 'error');
     } finally {
       setIsFileLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -450,7 +513,7 @@ Não adicione comentários. Utilize 'TextOverlay', 'ImageOverlay' ou 'Shape' par
 
   const renderContent = (content: string) => {
     // Matches closed OR unclosed code blocks (until end of string) for streaming safety
-    const parts = content.split(/(```[\s\S]*?(?:```|$))/g);
+    const parts = content.split(/(```[\s\S]*? (?: ```|$))/g);
     return parts.map((part, index) => {
       if (part.startsWith('```')) {
         const match = part.match(/```(\w*)\n?([\s\S]*?)(?:```|$)/);
@@ -466,6 +529,23 @@ Não adicione comentários. Utilize 'TextOverlay', 'ImageOverlay' ou 'Shape' par
 
             // Relaxed verification: if it looks like a design AST, render it.
             if (ast.slides || (ast.meta && ast.format) || ast.id?.startsWith('post') || Array.isArray(ast.slides)) {
+              // ── POST-PROCESS: Forçar URLs reais do Pexels nos ImageOverlay ──
+              if (pexelsUrlsRef.current.length > 0 && ast.slides) {
+                let urlIndex = 0;
+                for (const slide of ast.slides) {
+                  if (slide.elements) {
+                    for (const el of slide.elements) {
+                      if (el.type === 'ImageOverlay' && el.props?.src) {
+                        // Substitui qualquer URL que NÃO seja do Pexels
+                        if (!el.props.src.includes('images.pexels.com')) {
+                          el.props.src = pexelsUrlsRef.current[urlIndex % pexelsUrlsRef.current.length];
+                          urlIndex++;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
               return (
                 <div key={index} className="my-4 bg-[#151515] border border-indigo-500/30 rounded-xl overflow-hidden shadow-lg shadow-indigo-500/5">
                   <div className="bg-indigo-500/10 px-4 py-3 border-b border-indigo-500/20 flex items-center justify-between">
@@ -505,8 +585,10 @@ Não adicione comentários. Utilize 'TextOverlay', 'ImageOverlay' ou 'Shape' par
                 </div>
               );
             } else {
-              // Somente mostre o erro se claramente não for um stream de design válido ou estiver fora do padrão
-              console.error("Agent JSON parsing error:", e);
+              // JSON incompleto durante streaming é normal — só loga quando NÃO está carregando
+              if (!isLoading) {
+                console.warn("Agent JSON parsing error:", e);
+              }
             }
           }
         }
@@ -697,20 +779,20 @@ Não adicione comentários. Utilize 'TextOverlay', 'ImageOverlay' ou 'Shape' par
             <div className="h-full flex flex-col items-center justify-center p-4 -mt-16">
 
               <div className="flex flex-col mb-10">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-0 mb-1">
                   <div className="animate-pulse duration-[3000ms] flex-shrink-0">
                     <img
                       src={arccoEmblemUrl}
                       alt="Arcco Emblem"
-                      className="w-[65px] h-[65px] object-contain opacity-90"
+                      className="w-[85px] h-[85px] object-contain opacity-90"
                     />
                   </div>
-                  <h1 className="text-2xl md:text-3xl font-normal text-white tracking-wide leading-relaxed">
-                    {greetingTime}, {userName}
+                  <h1 className="text-2xl md:text-3xl font-normal text-white tracking-tight leading-snug">
+                    {greetingTime}, {firstName}
                   </h1>
                 </div>
-                <p className="text-2xl md:text-3xl font-normal text-neutral-400 tracking-wide leading-relaxed pl-[72px]">
-                  O que posso fazer por você?
+                <p className="text-2xl md:text-3xl font-normal text-neutral-400 tracking-tight leading-snug pl-[85px]">
+                  {greetingSubtitle}
                 </p>
               </div>
 

@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELARA - Moda Sofisticada</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Raleway:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #f5f0eb;
+            --accent: #c9a96e;
+            --gold: #d4af37;
+        }
+        body { font-family: 'Raleway', sans-serif; background: var(--secondary); }
+        h1, h2, h3, .serif { font-family: 'Cormorant Garamond', serif; }
+        .luxury-gradient {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        }
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #d4af37, #c9a96e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .product-card {
+            background: white;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .product-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .product-card:hover::after { opacity: 1; }
+        .product-card:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.15);
+        }
+        .product-card img {
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .product-card:hover img {
+            transform: scale(1.08);
+        }
+        .quick-view {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .product-card:hover .quick-view {
+            bottom: 20px;
+        }
+        .luxury-btn {
+            background: var(--primary);
+            color: white;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .luxury-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+            transition: left 0.6s;
+        }
+        .luxury-btn:hover::before { left: 100%; }
+        .luxury-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -10px rgba(212, 175, 55, 0.3);
+        }
+        @keyframes float-elegant {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+        }
+        .float-elegant { animation: float-elegant 5s ease-in-out infinite; }
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        .shimmer {
+            background: linear-gradient(to right, transparent, rgba(212, 175, 55, 0.3), transparent);
+            background-size: 1000px 100%;
+            animation: shimmer 3s infinite;
+        }
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .slide-up { animation: slide-up 0.8s ease-out forwards; }
+        .reveal { opacity: 0; transform: translateY(50px); transition: all 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+        .nav-luxury {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(201, 169, 110, 0.1);
+            transition: all 0.3s ease;
+        }
+        .nav-luxury.scrolled {
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+        }
+        .collection-badge {
+            background: linear-gradient(135deg, #d4af37, #c9a96e);
+            color: white;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        }
+        .size-btn {
+            transition: all 0.3s ease;
+            border: 1px solid #e5e5e5;
+        }
+        .size-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+        .size-btn.active {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: white;
+        }
+        .category-pill {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(201, 169, 110, 0.3);
+        }
+        .category-pill:hover, .category-pill.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        .testimonial-quote {
+            position: relative;
+        }
+        .testimonial-quote::before {
+            content: '"';
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 6rem;
+            color: rgba(201, 169, 110, 0.2);
+            position: absolute;
+            top: -2rem;
+            left: -1rem;
+            line-height: 1;
+        }
+        .hero-image {
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 92% 100%, 0 100%, 0 15%);
+        }
+        .collection-item {
+            position: relative;
+            overflow: hidden;
+        }
+        .collection-item img {
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .collection-item:hover img {
+            transform: scale(1.1);
+        }
+        .collection-overlay {
+            background: linear-gradient(to top, rgba(26, 26, 26, 0.9), transparent);
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 nav-luxury" id="navbar">
+        <div class="max-w-7xl mx-auto px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <a href="#" class="serif text-3xl font-bold tracking-wider text-[#1a1a1a]">ELARA</a>
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="#colecoes" class="text-sm tracking-widest text-[#1a1a1a] hover:text-[#c9a96e] transition-colors font-medium">COLEÇÕES</a>
+                    <a href="#novidades" class="text-sm tracking-widest text-[#1a1a1a] hover:text-[#c9a96e] transition-colors font-medium">NOVIDADES</a>
+                    <a href="#acessorios" class="text-sm tracking-widest text-[#1a1a1a] hover:text-[#c9a96e] transition-colors font-medium">ACESSÓRIOS</a>
+                    <a href="#sobre" class="text-sm tracking-widest text-[#1a1a1a] hover:text-[#c9a96e] transition-colors font-medium">SOBRE</a>
+                </div>
+            </div>
+            <div class="flex items-center gap-6">
+                <button class="text-[#1a1a1a] hover:text-[#c9a96e] transition-colors">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </button>
+                <button class="text-[#1a1a1a] hover:text-[#c9a96e] transition-colors">
+                    <i data-lucide="heart" class="w-5 h-5"></i>
+                </button>
+                <button class="text-[#1a1a1a] hover:text-[#c9a96e] transition-colors relative">
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    <span class="absolute -top-2 -right-2 w-5 h-5 bg-[#1a1a1a] text-white text-xs rounded-full flex items-center justify-center">3</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center pt-24 pb-16 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-8 grid md:grid-cols-2 gap-16 items-center">
+            <div class="space-y-8">
+                <p class="text-sm tracking-[0.3em] text-[#c9a96e] uppercase slide-up">Coleção Primavera/Verão 2024</p>
+                <h1 class="text-6xl md:text-8xl font-light leading-[0.95] serif slide-up" style="animation-delay: 0.1s;">
+                    Elegância
+                    <span class="block italic font-semibold gold-gradient-text">Sem Limites</span>
+                </h1>
+                <p class="text-xl text-gray-600 leading-relaxed max-w-md slide-up" style="animation-delay: 0.2s;">
+                    Descubra peças únicas que expressam sua personalidade e elevam seu estilo para um novo patamar.
+                </p>
+                <div class="flex flex-wrap gap-4 slide-up" style="animation-delay: 0.3s;">
+                    <button class="luxury-btn px-10 py-4 text-sm tracking-widest font-semibold flex items-center gap-3">
+                        Explorar Coleção
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                    <button class="border-2 border-[#1a1a1a] px-10 py-4 text-sm tracking-widest font-semibold hover:bg-[#1a1a1a] hover:text-white transition-all">
+                        Ver Lookbook
+                    </button>
+                </div>
+                <div class="flex items-center gap-12 pt-6 slide-up" style="animation-delay: 0.4s;">
+                    <div>
+                        <p class="serif text-4xl font-semibold text-[#1a1a1a]">50+</p>
+                        <p class="text-sm text-gray-500 tracking-wider">DESIGNERS</p>
+                    </div>
+                    <div>
+                        <p class="serif text-4xl font-semibold text-[#1a1a1a]">100%</p>
+                        <p class="text-sm text-gray-500 tracking-wider">EXCLUSIVO</p>
+                    </div>
+                    <div>
+                        <p class="serif text-4xl font-semibold text-[#1a1a1a]">24h</p>
+                        <p class="text-sm text-gray-500 tracking-wider">ENTREGA</p>
+                    </div>
+                </div>
+            </div>
+            <div class="relative">
+                <div class="hero-image overflow-hidden">
+                    <img src="https://images.pexels.com.photos-1515886657613-9f3515b0c78f" alt="Fashion" class="w-full h-[700px] object-cover float-elegant">
+                </div>
+                <div class="absolute -bottom-8 -left-8 bg-white p-8 shadow-xl slide-up" style="animation-delay: 0.5s;">
+                    <p class="serif text-lg italic text-[#c9a96e] mb-2">"A moda é a arte"</p>
+                    <p class="text-sm text-gray-600">— Coco Chanel</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="flex flex-wrap justify-center gap-4 reveal">
+                <button class="category-pill active px-8 py-3 rounded-full text-sm tracking-widest font-medium">TODOS</button>
+                <button class="category-pill px-8 py-3 rounded-full text-sm tracking-widest font-medium text-[#1a1a1a]">VESTIDOS</button>
+                <button class="category-pill px-8 py-3 rounded-full text-sm tracking-widest font-medium text-[#1a1a1a]">BLAZERS</button>
+                <button class="category-pill px-8 py-3 rounded-full text-sm tracking-widest font-medium text-[#1a1a1a]">CALÇADOS</button>
+                <button class="category-pill px-8 py-3 rounded-full text-sm tracking-widest font-medium text-[#1a1a1a]">ACESSÓRIOS</button>
+                <button class="category-pill px-8 py-3 rounded-full text-sm tracking-widest font-medium text-[#1a1a1a]">BOLSAS</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products -->
+    <section id="novidades" class="py-16">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between mb-12">
+                <div class="reveal">
+                    <p class="text-sm tracking-[0.3em] text-[#c9a96e] uppercase mb-3">Novidades</p>
+                    <h2 class="text-4xl md:text-5xl font-light serif">Destaques da <span class="italic font-semibold">Temporada</span></h2>
+                </div>
+                <a href="#" class="text-sm tracking-widest text-[#1a1a1a] hover:text-[#c9a96e] transition-colors mt-4 md:mt-0 reveal" style="transition-delay: 0.1s;">
+                    VER TODOS OS PRODUTOS
+                </a>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="product-card rounded-lg overflow-hidden reveal">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com.photos-1926769" alt="Product" class="w-full h-[400px] object-cover">
+                        <div class="collection-badge absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-medium tracking-wider">NOVO</div>
+                        <button class="quick-view w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-[#1a1a1a] hover:text-white transition-colors">
+                            <i data-lucide="eye" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs tracking-widest text-gray-500 mb-2">VESTIDOS</p>
+                        <h3 class="serif text-xl font-semibold text-[#1a1a1a] mb-2">Vestido Midi Seda</h3>
+                        <p class="text-lg font-semibold text-[#c9a96e]">R$ 1.290</p>
+                    </div>
+                </div>
+                <div class="product-card rounded-lg overflow-hidden reveal" style="transition-delay: 0.1s;">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com.photos-1092687" alt="Product" class="w-full h-[400px] object-cover">
+                        <button class="quick-view w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-[#1a1a1a] hover:text-white transition-colors">
+                            <i data-lucide="eye" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs tracking-widest text-gray-500 mb-2">BLAZERS</p>
+                        <h3 class="serif text-xl font-semibold text-[#1a1a1a] mb-2">Blazer Alfaiataria</h3>
+                        <p class="text-lg font-semibold text-[#c9a96e]">R$ 1.850</p>
+                    </div>
+                </div>
+                <div class="product-card rounded-lg overflow-hidden reveal" style="transition-delay: 0.2s;">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com.photos-1596555067433-7d75f62333b4" alt="Product" class="w-full h-[400px] object-cover">
+                        <div class="collection-badge absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-medium tracking-wider" style="background: #e74c3c;">-30%</div>
+                        <button class="quick-view w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-[#1a1a1a] hover:text-white transition-colors">
+                            <i data-lucide="eye" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs tracking-widest text-gray-500 mb-2">CALÇADOS</p>
+                        <h3 class="serif text-xl font-semibold text-[#1a1a1a] mb-2">Sapato Stiletto</h3>
+                        <div class="flex items-center gap-3">
+                            <p class="text-lg font-semibold text-[#c9a96e]">R$ 1.050</p>
+                            <p class="text-sm text-gray-400 line-through">R$ 1.500</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card rounded-lg overflow-hidden reveal" style="transition-delay: 0.3s;">
+                    <div class="relative overflow-hidden">
+                        <img src="https://images.pexels.com.photos-1584917869888-712c0aeb3e08" alt="Product" class="w-full h-[400px] object-cover">
+                        <button class="quick-view w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-[#1a1a1a] hover:text-white transition-colors">
+                            <i data-lucide="eye" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-xs tracking-widest text-gray-500 mb-2">BOLSAS</p>
+                        <h3 class="serif text-xl font-semibold text-[#1a1a1a] mb-2">Bolsa Couro Premium</h3>
+                        <p class="text-lg font-semibold text-[#c9a96e]">R$ 2.490</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Collections -->
+    <section id="colecoes" class="py-16 bg-[#1a1a1a] text-white">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="text-center mb-16 reveal">
+                <p class="text-sm tracking-[0.3em] text-[#c9a96e] uppercase mb-3">Coleções</p>
+                <h2 class="text-4xl md:text-5xl font-light serif">Explore Nossas <span class="italic font-semibold">Criações</span></h2>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="collection-item aspect-[3/4] rounded-2xl overflow-hidden reveal">
+                    <img src="https://images.pexels.com.photos-2033997" alt="Collection" class="w-full h-full object-cover">
+                    <div class="collection-overlay absolute inset-0 flex items-end p-8">
+                        <div>
+                            <p class="text-xs tracking-widest text-[#c9a96e] mb-2">PRIMAVERA</p>
+                            <h3 class="serif text-3xl font-semibold">Feminino</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="collection-item aspect-[3/4] rounded-2xl overflow-hidden reveal" style="transition-delay: 0.1s;">
+                    <img src="https://images.pexels.com.photos-1483985988758-8ac1f69d8b14" alt="Collection" class="w-full h-full object-cover">
+                    <div class="collection-overlay absolute inset-0 flex items-end p-8">
+                        <div>
+                            <p class="text-xs tracking-widest text-[#c9a96e] mb-2">ESPECIAL</p>
+                            <h3 class="serif text-3xl font-semibold">Noivas</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="collection-item aspect-[3/4] rounded-2xl overflow-hidden reveal" style="transition-delay: 0.2s;">
+                    <img src="https://images.pexels.com.photos-1213245" alt="Collection" class="w-full h-full object-cover">
+                    <div class="collection-overlay absolute inset-0 flex items-end p-8">
+                        <div>
+                            <p class="text-xs tracking-widest text-[#c9a96e] mb-2">PREMIUM</p>
+                            <h3 class="serif text-3xl font-semibold">Masculino</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-16">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="text-center mb-16 reveal">
+                <p class="text-sm tracking-[0.3em] text-[#c9a96e] uppercase mb-3">Depoimentos</p>
+                <h2 class="text-4xl md:text-5xl font-light serif">O que Dizem <span class="italic font-semibold">Nossas Clientes</span></h2>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-lg reveal">
+                    <div class="testimonial-quote mb-6">
+                        <p class="text-gray-600 italic leading-relaxed">"A qualidade das peças é excepcional. Cada detalhe é pensado com cuidado. Recomendo de olhos fechados!"</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gray-200 to-gray-300"></div>
+                        <div>
+                            <p class="font-semibold text-[#1a1a1a]">Isabella Costa</p>
+                            <p class="text-sm text-gray-500">Cliente desde 2023</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-lg reveal" style="transition-delay: 0.1s;">
+                    <div class="testimonial-quote mb-6">
+                        <p class="text-gray-600 italic leading-relaxed">"Encontrei vestidos únicos que não encontro em outro lugar. O atendimento é impecável do início ao fim."</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gray-200 to-gray-300"></div>
+                        <div>
+                            <p class="font-semibold text-[#1a1a1a]">Marina Silva</p>
+                            <p class="text-sm text-gray-500">Cliente desde 2022</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-lg reveal" style="transition-delay: 0.2s;">
+                    <div class="testimonial-quote mb-6">
+                        <p class="text-gray-600 italic leading-relaxed">"A entrega foi super rápida e as peças vieram perfeitas. Já é meu sexto pedido e continuarei comprando!"</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gray-200 to-gray-300"></div>
+                        <div>
+                            <p class="font-semibold text-[#1a1a1a]">Carla Mendes</p>
+                            <p class="text-sm text-gray-500">Cliente desde 2024</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section class="py-16 bg-[#f5f0eb]">
+        <div class="max-w-4xl mx-auto px-8">
+            <div class="text-center reveal">
+                <p class="text-sm tracking-[0.3em] text-[#c9a96e] uppercase mb-3">Newsletter</p>
+                <h2 class="text-4xl md:text-5xl font-light serif mb-4">Fique por Dentro das <span class="italic font-semibold">Novidades</span></h2>
+                <p class="text-xl text-gray-600 mb-8">Inscreva-se para receber ofertas exclusivas e novidades antes de todo mundo.</p>
+                <div class="flex flex-col md:flex-row gap-4 max-w-xl mx-auto">
+                    <input type="email" placeholder="Seu melhor e-mail" class="flex-1 px-6 py-4 bg-white border-2 border-gray-200 rounded-full focus:border-[#c9a96e] focus:outline-none transition-colors">
+                    <button class="luxury-btn px-8 py-4 rounded-full text-sm tracking-widest font-semibold">
+                        INSCREVER-SE
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-[#1a1a1a] text-white py-16">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="grid md:grid-cols-4 gap-12">
+                <div>
+                    <a href="#" class="serif text-3xl font-bold tracking-wider">ELARA</a>
+                    <p class="text-gray-400 mt-4 text-sm leading-relaxed">Moda sofisticada para quem busca expressar sua personalidade através do estilo.</p>
+                </div>
+                <div>
+                    <h4 class="text-sm tracking-widest text-[#c9a96e] mb-6">SHOP</h4>
+                    <ul class="space-y-3 text-gray-400 text-sm">
+                        <li><a href="#" class="hover:text-white transition-colors">Vestidos</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Blazers</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Calçados</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Acessórios</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-sm tracking-widest text-[#c9a96e] mb-6">INFORMAÇÕES</h4>
+                    <ul class="space-y-3 text-gray-400 text-sm">
+                        <li><a href="#" class="hover:text-white transition-colors">Sobre Nós</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Entrega</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Trocas</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Fale Conosco</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-sm tracking-widest text-[#c9a96e] mb-6">REDES SOCIAIS</h4>
+                    <div class="flex gap-4">
+                        <a href="#" class="w-10 h-10 border border-gray-700 rounded-full flex items-center justify-center hover:border-[#c9a96e] hover:text-[#c9a96e] transition-colors">
+                            <i data-lucide="instagram" class="w-5 h-5"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 border border-gray-700 rounded-full flex items-center justify-center hover:border-[#c9a96e] hover:text-[#c9a96e] transition-colors">
+                            <i data-lucide="facebook" class="w-5 h-5"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 border border-gray-700 rounded-full flex items-center justify-center hover:border-[#c9a96e] hover:text-[#c9a96e] transition-colors">
+                            <i data-lucide="twitter" class="w-5 h-5"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 border border-gray-700 rounded-full flex items-center justify-center hover:border-[#c9a96e] hover:text-[#c9a96e] transition-colors">
+                            <i data-lucide="pinterest" class="w-5 h-5"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-gray-500 text-sm">© 2024 ELARA. Todos os direitos reservados.</p>
+                <div class="flex gap-6 text-gray-500 text-sm">
+                    <a href="#" class="hover:text-white transition-colors">Política de Privacidade</a>
+                    <a href="#" class="hover:text-white transition-colors">Termos de Uso</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Reveal on scroll
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealOnScroll = () => {
+            revealElements.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                const windowHeight = window.innerHeight;
+                if (rect.top < windowHeight * 0.85) {
+                    el.classList.add('active');
+                }
+            });
+        };
+        window.addEventListener('scroll', revealOnScroll);
+        revealOnScroll();
+
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Category pills
+        const categoryPills = document.querySelectorAll('.category-pill');
+        categoryPills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                categoryPills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+            });
+        });
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
