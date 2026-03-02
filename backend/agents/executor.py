@@ -84,87 +84,23 @@ async def _web_fetch(url: str) -> str:
 
 async def _ask_browser(args: dict) -> str:
     """
-    Usa o Firecrawl para navegar, interagir e extrair conteúdo de uma URL.
-    Suporta actions: click, scroll, wait, write, press, screenshot, execute_javascript.
+    Navega remotamente via Browserbase + Playwright (CDP).
+    Delega toda a lógica para browser_service.execute_browserbase_task.
     """
-    from backend.core.config import get_config
+    from backend.services.browser_service import execute_browserbase_task
 
-    config = get_config()
     url = args.get("url", "")
     if not url:
-        return "Erro: URL não fornecida."
-    if not config.firecrawl_api_key:
-        return "Erro: FIRECRAWL_API_KEY não configurada. Adicione a chave na tabela ApiKeys do Supabase com provider='firecrawl'."
+        return "Erro: URL não fornecida para o Browser Agent."
 
-    # Monta kwargs dinâmicos para o Firecrawl
-    scrape_kwargs: dict = {
-        "formats": ["markdown"],
-    }
-
-    # Actions opcionais (click, scroll, wait, write, press, screenshot, JS)
-    raw_actions = args.get("actions", [])
-    if raw_actions and isinstance(raw_actions, list):
-        scrape_kwargs["actions"] = raw_actions
-
-    # Wait before scrape (ms) — útil pra SPAs que carregam via JS
-    wait_for = args.get("wait_for")
-    if wait_for:
-        scrape_kwargs["wait_for"] = int(wait_for)
-
-    # Filtrar só conteúdo principal (remove nav, footer, sidebar)
-    if args.get("only_main_content", True):
-        scrape_kwargs["only_main_content"] = True
-
-    # Timeout customizado
-    timeout = args.get("timeout")
-    if timeout:
-        scrape_kwargs["timeout"] = int(timeout)
-
-    # Tags HTML a incluir/excluir
-    include_tags = args.get("include_tags")
-    if include_tags:
-        scrape_kwargs["include_tags"] = include_tags
-
-    exclude_tags = args.get("exclude_tags")
-    if exclude_tags:
-        scrape_kwargs["exclude_tags"] = exclude_tags
-
-    # Mobile mode
-    if args.get("mobile"):
-        scrape_kwargs["mobile"] = True
-
-    try:
-        from firecrawl import FirecrawlApp
-        app = FirecrawlApp(api_key=config.firecrawl_api_key)
-
-        action_desc = ""
-        if raw_actions:
-            steps = [a.get("type", "?") for a in raw_actions if isinstance(a, dict)]
-            action_desc = f" (ações: {', '.join(steps)})"
-        logger.info(f"[BROWSER] Acessando {url}{action_desc}")
-
-        scrape_result = await asyncio.to_thread(
-            lambda: app.scrape(url, **scrape_kwargs)
-        )
-
-        # v4 SDK: result pode ser objeto com atributo .markdown ou dict
-        if hasattr(scrape_result, 'markdown'):
-            markdown_content = scrape_result.markdown or ''
-        elif isinstance(scrape_result, dict):
-            markdown_content = scrape_result.get('markdown', '')
-        else:
-            markdown_content = str(scrape_result)
-
-        if not markdown_content:
-            return f"O browser acessou {url}{action_desc}, mas não extraiu conteúdo Markdown."
-
-        if len(markdown_content) > 15000:
-            markdown_content = markdown_content[:15000] + "\n\n... [Truncado por limite de tokens]"
-
-        return f"Conteúdo extraído de {url}{action_desc}:\n\n{markdown_content}"
-    except Exception as e:
-        logger.error(f"[BROWSER] Erro ao acessar {url}: {e}")
-        return f"Erro ao acessar o site com o Browser Agent: {e}"
+    return await execute_browserbase_task(
+        url=url,
+        actions=args.get("actions", []),
+        wait_for=int(args.get("wait_for") or 0),
+        mobile=bool(args.get("mobile", False)),
+        include_tags=args.get("include_tags"),
+        exclude_tags=args.get("exclude_tags"),
+    )
 
 
 async def _generate_pdf(args: dict) -> str:

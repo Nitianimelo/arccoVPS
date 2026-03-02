@@ -25,5 +25,6 @@ Pillow>=10.0.0
 python-multipart>=0.0.6
 PyPDF2>=3.0.0
 
-# Browser Agent
-firecrawl-py>=1.0.0
+# Browser Agent (Browserbase + Playwright via CDP)
+browserbase>=1.0.0
+playwright>=1.44.0

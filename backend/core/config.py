@@ -38,6 +38,10 @@ class AgentConfig:
     brave_api_key: str = ""
     firecrawl_api_key: str = ""
 
+    # Browser Agent (Browserbase)
+    browserbase_api_key: str = ""
+    browserbase_project_id: str = ""
+
     # Agent Behavior
     enable_caching: bool = True
     cache_ttl_seconds: int = 86400
@@ -86,6 +90,8 @@ class AgentConfig:
         self.tavily_api_key = os.getenv("TAVILY_API_KEY", "") or os.getenv("VITE_TAVILY_API_KEY", "")
         self.brave_api_key = os.getenv("BRAVE_SEARCH_API_KEY", "")
         self.firecrawl_api_key = os.getenv("FIRECRAWL_API_KEY", "")
+        self.browserbase_api_key = os.getenv("BROWSERBASE_API_KEY", "")
+        self.browserbase_project_id = os.getenv("BROWSERBASE_PROJECT_ID", "")
         self.enable_caching = os.getenv("AGENT_CACHE", "true").lower() == "true"
         self.cache_ttl_seconds = int(os.getenv("AGENT_CACHE_TTL", str(self.cache_ttl_seconds)))
         self.web_timeout = float(os.getenv("WEB_TIMEOUT", str(self.web_timeout)))
@@ -113,8 +119,11 @@ class AgentConfig:
         needs_brave = not self.brave_api_key
         needs_anthropic = not self.api_key
         needs_firecrawl = not self.firecrawl_api_key
+        needs_browserbase = not self.browserbase_api_key
+        needs_browserbase_project = not self.browserbase_project_id
 
-        if not (needs_openrouter or needs_tavily or needs_brave or needs_anthropic or needs_firecrawl):
+        if not (needs_openrouter or needs_tavily or needs_brave or needs_anthropic
+                or needs_firecrawl or needs_browserbase or needs_browserbase_project):
             print("[CONFIG] All API keys loaded from environment variables")
             return
 
@@ -162,6 +171,14 @@ class AgentConfig:
                 if needs_firecrawl and key_map.get("firecrawl"):
                     self.firecrawl_api_key = key_map["firecrawl"]
                     print("[CONFIG] Firecrawl API key loaded from Supabase")
+
+                if needs_browserbase and key_map.get("browserbase"):
+                    self.browserbase_api_key = key_map["browserbase"]
+                    print("[CONFIG] Browserbase API key loaded from Supabase")
+
+                if needs_browserbase_project and key_map.get("browserbase_project_id"):
+                    self.browserbase_project_id = key_map["browserbase_project_id"]
+                    print("[CONFIG] Browserbase Project ID loaded from Supabase")
 
                 # Found keys, stop trying table names
                 break
