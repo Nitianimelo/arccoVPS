@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 # ── Mapa de Ferramentas do Supervisor ────────────────────────────────────────
 
 TOOL_MAP = {
-    "ask_web_search": {"route": "web_search", "is_terminal": False},
     "ask_file_generator": {"route": "file_generator", "is_terminal": False},
     "ask_file_modifier": {"route": "file_modifier", "is_terminal": False},
     "ask_browser": {"route": "browser", "is_terminal": False},
@@ -322,11 +321,7 @@ async def orchestrate_and_stream(
                     # Contexto truncado: pega as últimas 5 interações pra enviar aos sub-agentes
                     recent_context = [m for m in messages if m.get("role") in ["user", "assistant"]][-5:]
                     
-                    if route == "web_search":
-                        query = func_args.get("query", user_intent)
-                        step_message = f"Buscando na web: \"{query[:50]}\"..."
-                        temp_msgs = recent_context + [{"role": "user", "content": f"Realize a pesquisa com a query: {query}"}]
-                    elif route == "file_generator":
+                    if route == "file_generator":
                         file_type = func_args.get("file_type", "arquivo").upper()
                         step_message = f"Gerando {file_type} → estruturando dados e criando arquivo..."
                         content = f"Instruções: {func_args.get('instructions')} Dados: {func_args.get('data')}"

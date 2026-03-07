@@ -33,11 +33,6 @@ class AgentConfig:
     supabase_key: str = ""
     supabase_storage_bucket: str = "chat-uploads"
 
-    # Search
-    tavily_api_key: str = ""
-    brave_api_key: str = ""
-    firecrawl_api_key: str = ""
-
     # Browser Agent (Browserbase)
     browserbase_api_key: str = ""
     browserbase_project_id: str = ""
@@ -87,9 +82,6 @@ class AgentConfig:
             or "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdma3ljeGRiYnpjenJ3aWtoY3ByIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTc4MjU5MywiZXhwIjoyMDg1MzU4NTkzfQ.zAB2HFhpyrtLD4aOvxDqS63Rvh_NwxgtS8ZhCj8xSnw"
         )
         self.supabase_storage_bucket = os.getenv("SUPABASE_STORAGE_BUCKET", self.supabase_storage_bucket)
-        self.tavily_api_key = os.getenv("TAVILY_API_KEY", "") or os.getenv("VITE_TAVILY_API_KEY", "")
-        self.brave_api_key = os.getenv("BRAVE_SEARCH_API_KEY", "")
-        self.firecrawl_api_key = os.getenv("FIRECRAWL_API_KEY", "")
         self.browserbase_api_key = os.getenv("BROWSERBASE_API_KEY", "")
         self.browserbase_project_id = os.getenv("BROWSERBASE_PROJECT_ID", "")
         self.enable_caching = os.getenv("AGENT_CACHE", "true").lower() == "true"
@@ -115,15 +107,12 @@ class AgentConfig:
             return
 
         needs_openrouter = not self.openrouter_api_key
-        needs_tavily = not self.tavily_api_key
-        needs_brave = not self.brave_api_key
         needs_anthropic = not self.api_key
-        needs_firecrawl = not self.firecrawl_api_key
         needs_browserbase = not self.browserbase_api_key
         needs_browserbase_project = not self.browserbase_project_id
 
-        if not (needs_openrouter or needs_tavily or needs_brave or needs_anthropic
-                or needs_firecrawl or needs_browserbase or needs_browserbase_project):
+        if not (needs_openrouter or needs_anthropic
+                or needs_browserbase or needs_browserbase_project):
             print("[CONFIG] All API keys loaded from environment variables")
             return
 
@@ -156,21 +145,9 @@ class AgentConfig:
                     self.openrouter_api_key = key_map["openrouter"]
                     print(f"[CONFIG] OpenRouter API key loaded from Supabase: {self.openrouter_api_key[:15]}...")
 
-                if needs_tavily and key_map.get("tavily"):
-                    self.tavily_api_key = key_map["tavily"]
-                    print("[CONFIG] Tavily API key loaded from Supabase")
-
-                if needs_brave and key_map.get("brave"):
-                    self.brave_api_key = key_map["brave"]
-                    print("[CONFIG] Brave API key loaded from Supabase")
-
                 if needs_anthropic and key_map.get("anthropic"):
                     self.api_key = key_map["anthropic"]
                     print("[CONFIG] Anthropic API key loaded from Supabase")
-
-                if needs_firecrawl and key_map.get("firecrawl"):
-                    self.firecrawl_api_key = key_map["firecrawl"]
-                    print("[CONFIG] Firecrawl API key loaded from Supabase")
 
                 if needs_browserbase and key_map.get("browserbase"):
                     self.browserbase_api_key = key_map["browserbase"]
@@ -200,9 +177,6 @@ class AgentConfig:
             return False, "SUPABASE_KEY não configurada"
         return True, "OK"
 
-    @property
-    def search_api_key(self) -> str:
-        return self.tavily_api_key or self.brave_api_key
 
 
 _config: Optional[AgentConfig] = None

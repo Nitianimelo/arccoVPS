@@ -3,6 +3,7 @@ Arcco AI Backend — FastAPI Application.
 
 Entry point para o backend Python.
 Serve todos os endpoints que antes eram Netlify Functions.
+Inclui: chat, builder, search, files, ocr, admin.
 
 Uso:
     uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload

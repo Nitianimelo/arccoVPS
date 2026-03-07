@@ -159,7 +159,7 @@ function App() {
       case 'ARCCO_DESIGN':
         return <PostBuilder initialState={activeDesign} onBack={() => setCurrentView('ARCCO_CHAT')} />;
       case 'ARCCO_PAGES':
-        return <ArccoPages initialAST={activeDesign} userEmail={userName || "usuario@teste.com"} onBack={() => setCurrentView('ARCCO_CHAT')} />;
+        return <ArccoPages userEmail={userName || "usuario@teste.com"} onBack={() => setCurrentView('ARCCO_CHAT')} />;
       case 'MY_PAGES':
         return (
           <MyPagesPage

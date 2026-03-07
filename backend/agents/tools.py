@@ -339,25 +339,6 @@ SUPERVISOR_TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "ask_web_search",
-            "description": "Delega uma pesquisa na internet para o Especialista de Busca Web. Retorna os dados crus/resumidos encontrados.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "Consulta detalhada e otimizada para a busca web (ex: adicione o ano, termos específicos)"
-                    }
-                },
-                "required": [
-                    "query"
-                ]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "ask_file_generator",
             "description": "Delega a criação de um documento (Excel ou PDF) novo para o Especialista de Arquivos. Retorna a URL de download.",
             "parameters": {

@@ -471,9 +471,9 @@ const PLAN_COLORS: Record<string, string> = {
 const PROVIDER_ICONS: Record<string, string> = {
   openrouter: '🔀',
   anthropic: '🤖',
-  tavily: '🔍',
-  brave: '🦁',
-  firecrawl: '🔥',
+  browserbase: '🌐',
+  browserbase_project_id: '🗂️',
+  vercel: '▲',
 };
 
 /** Exibe apenas início e fim da chave: "sk-ab••••••••••••ef12" */
@@ -506,7 +506,7 @@ export const AdminPage: React.FC = () => {
 
   // Form para adicionar nova API Key
   const [showAddKey, setShowAddKey] = useState(false);
-  const [newKeyProvider, setNewKeyProvider] = useState('firecrawl');
+  const [newKeyProvider, setNewKeyProvider] = useState('browserbase');
   const [newKeyValue, setNewKeyValue] = useState('');
   const [addingKey, setAddingKey] = useState(false);
   const [addKeyError, setAddKeyError] = useState('');
@@ -905,11 +905,11 @@ export const AdminPage: React.FC = () => {
                       onChange={e => setNewKeyProvider(e.target.value)}
                       className="bg-[#1a1a1a] border border-neutral-800 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-indigo-500/50"
                     >
-                      <option value="firecrawl">🔥 Firecrawl</option>
+                      <option value="browserbase">🌐 Browserbase (API Key)</option>
+                      <option value="browserbase_project_id">🗂️ Browserbase (Project ID)</option>
                       <option value="openrouter">🔀 OpenRouter</option>
                       <option value="anthropic">🤖 Anthropic</option>
-                      <option value="tavily">🔍 Tavily</option>
-                      <option value="brave">🦁 Brave</option>
+                      <option value="vercel">▲ Vercel</option>
                     </select>
                   </div>
                   <div className="flex-1">
@@ -917,7 +917,12 @@ export const AdminPage: React.FC = () => {
                     <input
                       value={newKeyValue}
                       onChange={e => { setNewKeyValue(e.target.value); setAddKeyError(''); }}
-                      placeholder={newKeyProvider === 'firecrawl' ? 'fc-...' : 'sk-...'}
+                      placeholder={
+                        newKeyProvider === 'browserbase' ? 'bb_live_...' :
+                        newKeyProvider === 'browserbase_project_id' ? 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' :
+                        newKeyProvider === 'vercel' ? 'vck_...' :
+                        'sk-...'
+                      }
                       className="w-full bg-[#1a1a1a] border border-neutral-800 text-white text-sm font-mono rounded-lg px-3 py-2 outline-none focus:border-indigo-500/50"
                     />
                   </div>

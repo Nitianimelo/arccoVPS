@@ -3,6 +3,7 @@ Endpoint de builder de páginas — SSE streaming com agente Python robusto.
 Suporta dois modos de operação:
 1. Legacy/Code Mode: Manipulação de arquivos HTML/CSS/JS brutos.
 2. Design Mode (AST): Manipulação de estrutura de dados JSON (PageAST) com componentes atômicos.
+3. Deploy Mode: Publicação de páginas via Vercel REST API.
 """
 
 import json
@@ -109,6 +110,77 @@ def build_context_message(files: list[dict], agent_mode: str, render_mode: str, 
         )
 
 
+APP_BUILDER_SYSTEM_PROMPT = """Você é um engenheiro sênior de frontend especializado em criar aplicações React modernas e completas.
+
+## STACK OBRIGATÓRIA
+- **Runtime**: React 18 + Vite + TypeScript (tipagem estrita)
+- **Estilização**: Tailwind CSS + tailwindcss-animate
+- **Componentes UI**: shadcn/ui (Button, Card, Dialog, Tabs, etc.) + lucide-react para ícones
+- **Estado Global**: Zustand (simples, nunca Redux ou Context API complexo)
+- **Roteamento**: React Router DOM v6+ (BrowserRouter já está no main.tsx)
+- **Gráficos**: Recharts (quando precisar de dados visuais)
+
+## COMPONENTES shadcn/ui DISPONÍVEIS (já instalados no template)
+Importe diretamente — NÃO precisa criar esses arquivos:
+- `@/components/ui/button` → Button, buttonVariants
+- `@/components/ui/card` → Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter
+- `@/components/ui/input` → Input
+- `@/components/ui/textarea` → Textarea
+- `@/components/ui/badge` → Badge
+- `@/components/ui/label` → Label
+- `@/components/ui/separator` → Separator
+- `@/components/ui/tabs` → Tabs, TabsList, TabsTrigger, TabsContent
+- `@/components/ui/dialog` → Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogTrigger, DialogClose
+- `@/components/ui/select` → Select, SelectTrigger, SelectContent, SelectItem, SelectValue, SelectGroup, SelectLabel
+- `@/components/ui/avatar` → Avatar, AvatarImage, AvatarFallback
+- `@/components/ui/dropdown-menu` → DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuGroup
+- `@/components/ui/switch` → Switch
+- `@/components/ui/tooltip` → Tooltip, TooltipTrigger, TooltipContent, TooltipProvider
+- `@/lib/utils` → cn (para merge de classes Tailwind)
+
+## REGRAS DE ARQUITETURA
+1. **Zero backend**: 100% client-side. NUNCA use fetch/axios para APIs reais, Supabase, Firebase, etc.
+2. **Mock Data Brilhante**: Sempre que precisar exibir dados (tabelas, gráficos, listas), crie `src/data/mockData.ts` com dados RICOS, REALISTAS e adaptados ao nicho (ex: barbearia → cortes reais, clientes fictícios plausíveis, horários, preços em R$)
+3. **Zustand stores**: Crie em `src/store/useXxxStore.ts`. Estado inicial populado com mock data.
+4. **Componentes reutilizáveis**: Coloque em `src/components/`. Use shadcn/ui como base.
+5. **Páginas**: Coloque em `src/pages/`. Configure rotas no App.tsx.
+6. **TypeScript estrito**: Defina interfaces para todos os dados em `src/types/`.
+
+## FORMATO DE RESPOSTA (OBRIGATÓRIO)
+Retorne APENAS JSON válido neste formato:
+
+```json
+{
+  "files": {
+    "src/App.tsx": "conteúdo completo do arquivo",
+    "src/pages/Dashboard.tsx": "conteúdo completo",
+    "src/components/Sidebar.tsx": "conteúdo completo",
+    "src/store/useAppStore.ts": "conteúdo completo",
+    "src/data/mockData.ts": "conteúdo completo",
+    "src/types/index.ts": "conteúdo completo"
+  },
+  "explanation": "Breve descrição do que foi criado/modificado"
+}
+```
+
+### REGRAS DO JSON:
+- Para CRIAÇÃO: inclua TODOS os arquivos do projeto (App.tsx, pages, components, store, data, types)
+- Para EDIÇÃO: inclua APENAS os arquivos que foram modificados
+- NÃO inclua arquivos de configuração (package.json, vite.config.ts, tsconfig.json, tailwind.config.ts) — eles já existem
+- Conteúdo dos arquivos deve ser strings TypeScript/TSX válidas e completas
+- Use \\n para quebras de linha dentro das strings do JSON
+- Escape aspas duplas internas com \\"
+
+## QUALIDADE DO DESIGN
+- Use dark mode por padrão (classe `dark` no html ou variáveis CSS do index.css)
+- Design profissional e moderno — não faça nada "placeholder"
+- Animações suaves com tailwindcss-animate (fade-in, slide-in nas rotas)
+- Sidebar lateral fixa para dashboards/sistemas
+- Responsivo para mobile (hamburger menu, cards empilhados)
+- Recharts para gráficos: AreaChart, BarChart, LineChart com dados do mockData.ts
+"""
+
+
 async def builder_stream(
     messages: list,
     files: list[dict],
@@ -116,121 +188,166 @@ async def builder_stream(
     render_mode: str,
     page_state: Optional[Dict[str, Any]],
     model: str,
+    app_files: Optional[Dict[str, str]] = None,
 ) -> AsyncGenerator[str, None]:
     """
     Loop do agente builder com SSE.
-    Suporta AST Mode e Code Mode.
+    Modo 'app': SEMPRE usa APP_BUILDER_SYSTEM_PROMPT (ignora registry).
+    Modo legado: usa registry prompt para HTML/AST.
     """
     config = get_config()
     MAX_ITERATIONS = 8
 
-    # Seleciona System Prompt e Contexto baseado no modo
-    if render_mode == "ast":
-        base_system = registry.get_prompt("pages_ux")
-        if not base_system:
-            logger.warning("[Builder] Fallback: PAGES_UX custom prompt não encontrado.")
-            base_system = "Você é um Arquiteto de UI especializado em construir landing pages modernas usando AST. Gere JSON patches."
-        model_to_use = model or registry.get_model("pages_ux") or config.openrouter_model
+    # ── Seleção de sistema de prompt e modelo ─────────────────────────────────
+    # App mode: IGNORA registry — usa sempre APP_BUILDER_SYSTEM_PROMPT
+    is_app_mode = (render_mode == "app") or (app_files is not None)
+
+    if is_app_mode:
+        base_system = APP_BUILDER_SYSTEM_PROMPT
+        # Prioridade: parâmetro explícito > claude-3.5-sonnet (padrão para apps)
+        model_to_use = model or "anthropic/claude-3.5-sonnet"
+        tools_to_use = None  # sem busca web no modo app (mais rápido e focado)
     else:
-        base_system = registry.get_prompt("pages_dev")
-        if not base_system:
-            logger.warning("[Builder] Fallback: PAGES_DEV custom prompt não encontrado.")
-            base_system = "Você é um desenvolvedor frontend focado em landing pages. Escreva código HTML/CSS válido. Retorne JSON."
+        base_system = registry.get_prompt("pages_dev") or APP_BUILDER_SYSTEM_PROMPT
         model_to_use = model or registry.get_model("pages_dev") or config.openrouter_model
+        tools_to_use = BUILDER_TOOLS
 
-    project_context = build_context_message(files, agent_mode, render_mode, page_state)
-    
-    full_system = base_system
-    if project_context:
-        full_system += f"\\n\\n---\\n{project_context}"
+    logger.info(f"[BUILDER] mode={render_mode} is_app={is_app_mode} model={model_to_use} agent={agent_mode}")
 
-    # Monta histórico de mensagens
+    # ── Contexto do projeto para edição ───────────────────────────────────────
+    project_context = ""
+    if app_files:
+        file_tree = "\n".join(f"  - {path}" for path in sorted(app_files.keys()))
+        mode_label = (
+            "EDIÇÃO — retorne APENAS os arquivos que precisam ser modificados"
+            if agent_mode == "editing"
+            else "CRIAÇÃO — gere TODOS os arquivos do projeto"
+        )
+        project_context = f"## Modo: {mode_label}\n\n## Arquivos existentes:\n{file_tree}\n\n"
+        if agent_mode == "editing":
+            key_files = ["src/App.tsx", "src/types/index.ts", "src/store/useAppStore.ts", "src/data/mockData.ts"]
+            for kf in key_files:
+                if kf in app_files:
+                    project_context += f"\n### {kf}\n```typescript\n{app_files[kf][:3000]}\n```\n"
+
+    full_system = base_system + (f"\n\n---\n{project_context}" if project_context else "")
+
     current_messages = [{"role": "system", "content": full_system}]
     for msg in messages:
-        if isinstance(msg, dict):
-            current_messages.append(msg)
-        else:
-            current_messages.append(msg.model_dump())
+        current_messages.append(msg if isinstance(msg, dict) else msg.model_dump())
 
     iteration = 0
 
     try:
-        yield sse_event("steps", f"<step>🚀 Agente builder iniciado ({render_mode.upper()})...</step>")
+        # ── FASE 1: Planejamento rápido (só no modo app) ─────────────────────
+        if is_app_mode:
+            yield sse_event("steps", "<step>📋 Analisando solicitação...</step>")
+            try:
+                action_verb = "modificar" if agent_mode == "editing" else "criar"
+                last_user_msg = next(
+                    (m["content"] for m in reversed(current_messages) if m.get("role") == "user"),
+                    ""
+                )
+                plan_data = await call_openrouter(
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                f"O usuário quer {action_verb} um app React. "
+                                "Em 1 frase direta (máx 130 chars), descreva o que você vai criar/modificar. "
+                                "Seja específico: mencione o nicho e as principais funcionalidades. "
+                                "Exemplo: 'Vou criar um dashboard de barbearia com agenda, lista de clientes e gráficos de faturamento.' "
+                                "Responda APENAS com a frase, sem prefixos como 'Claro' ou 'Certamente'."
+                            ),
+                        },
+                        {"role": "user", "content": last_user_msg},
+                    ],
+                    model=model_to_use,
+                    max_tokens=140,
+                    temperature=0.4,
+                )
+                plan_text = (plan_data["choices"][0]["message"].get("content") or "").strip()
+                if plan_text:
+                    yield sse_event("chunk", plan_text)
+            except Exception as plan_err:
+                logger.warning(f"[BUILDER] Fase de planejamento falhou: {plan_err}")
+
+        # ── FASE 2: Geração principal ─────────────────────────────────────────
+        action_label = "Modificando arquivos" if agent_mode == "editing" else "Gerando projeto React"
+        yield sse_event("steps", f"<step>⚡ {action_label}...</step>")
 
         while iteration < MAX_ITERATIONS:
             iteration += 1
-            yield sse_event("steps", f"<step>🤔 Pensando (iteração {iteration})...</step>")
+
+            if iteration > 1:
+                yield sse_event("steps", f"<step>🔧 Refinando resposta (passo {iteration})...</step>")
 
             try:
                 data = await call_openrouter(
                     messages=current_messages,
                     model=model_to_use,
                     max_tokens=16000,
-                    tools=BUILDER_TOOLS,
+                    tools=tools_to_use,
                 )
             except Exception as outer_err:
-                logger.error(f"Erro na comunicação com LLM (OpenRouter HTTP exc): {outer_err}", exc_info=True)
+                logger.error(f"[BUILDER] Erro LLM: {outer_err}", exc_info=True)
                 yield sse_event("error", f"Falha de conexão com a IA: {outer_err}")
                 return
 
             if data.get("error"):
-                logger.error(f"Erro formatado retornado pela OpenRouter: {data['error']}")
+                logger.error(f"[BUILDER] Erro OpenRouter: {data['error']}")
                 yield sse_event("error", json.dumps(data["error"]))
                 return
 
             message = data["choices"][0]["message"]
             current_messages.append(message)
 
-            # Se há tool calls, executa-os
+            # Tool calls
             if message.get("tool_calls"):
                 tool_names = [t["function"]["name"] for t in message["tool_calls"]]
-                yield sse_event("steps", f"<step>🔧 Usando ferramentas: {', '.join(tool_names)}</step>")
+                yield sse_event("steps", f"<step>🔧 Usando {', '.join(tool_names)}...</step>")
 
                 for tool in message["tool_calls"]:
                     func_name = tool["function"]["name"]
                     func_args = json.loads(tool["function"]["arguments"])
-
-                    yield sse_event("steps", f"<step>⚡ Executando {func_name}...</step>")
-
+                    yield sse_event("steps", f"<step>🔍 {func_name}: {func_args.get('query', func_args.get('url', ''))[:60]}</step>")
                     try:
                         result = await execute_builder_tool(func_name, func_args)
                     except Exception as e:
                         result = f"Erro: {e}"
-                        yield sse_event("steps", f"<step>⚠️ Erro em {func_name}: {e}</step>")
-
                     current_messages.append({
                         "role": "tool",
                         "tool_call_id": tool["id"],
                         "content": result,
                     })
-                    yield sse_event("steps", f"<step>✅ {func_name} concluído.</step>")
-
-                # Continua o loop para o LLM gerar a resposta final
+                    yield sse_event("steps", f"<step>✅ {func_name} concluído</step>")
                 continue
 
-            # Sem tool calls — esta é a resposta final
+            # Resposta final
             final_content = (message.get("content") or "").strip()
-
             if not final_content:
                 yield sse_event("error", "Resposta vazia do agente.")
                 return
 
-            # Tenta extrair JSON de actions (genérico, serve para AST ou File)
             actions_json = _extract_json_response(final_content)
 
             if actions_json:
-                action_count = 0
-                if "actions" in actions_json:
-                    action_count = len(actions_json["actions"])
-                    yield sse_event("steps", f"<step>✅ {action_count} arquivos gerados.</step>")
+                if "files" in actions_json:
+                    file_paths = list(actions_json["files"].keys())
+                    yield sse_event("steps", f"<step>📦 {len(file_paths)} arquivo(s) gerado(s)</step>")
+                    # Mostra cada arquivo sendo "aplicado"
+                    for fp in file_paths[:12]:
+                        yield sse_event("steps", f"<step>📄 {fp}</step>")
+                    if len(file_paths) > 12:
+                        yield sse_event("steps", f"<step>... e mais {len(file_paths) - 12} arquivo(s)</step>")
+                elif "actions" in actions_json:
+                    yield sse_event("steps", f"<step>✅ {len(actions_json['actions'])} ação(ões) aplicada(s)</step>")
                 elif "ast_actions" in actions_json:
-                    action_count = len(actions_json["ast_actions"])
-                    yield sse_event("steps", f"<step>✨ {action_count} alterações de design aplicadas.</step>")
-                
+                    yield sse_event("steps", f"<step>✨ {len(actions_json['ast_actions'])} alterações aplicadas</step>")
+
                 yield sse_event("actions", json.dumps(actions_json))
             else:
-                # Resposta de texto (pergunta/clarificação)
-                yield sse_event("steps", "<step>💬 Resposta textual.</step>")
+                yield sse_event("steps", "<step>💬 Resposta textual</step>")
                 yield sse_event("chunk", final_content)
 
             return
@@ -238,13 +355,13 @@ async def builder_stream(
         yield sse_event("error", "Limite de iterações atingido.")
 
     except Exception as e:
-        logger.error(f"Builder stream error: {e}", exc_info=True)
+        logger.error(f"[BUILDER] Stream error: {e}", exc_info=True)
         yield sse_event("error", str(e))
 
 
 def _extract_json_response(text: str) -> dict | None:
-    """Tenta extrair JSON da resposta (suporta 'actions' e 'ast_actions')."""
-    
+    """Tenta extrair JSON da resposta. Suporta formato 'files' (novo) e 'actions'/'ast_actions' (legado)."""
+
     # Tentativa 1: JSON Parse direto
     try:
         parsed = json.loads(text)
@@ -253,47 +370,46 @@ def _extract_json_response(text: str) -> dict | None:
     except json.JSONDecodeError:
         pass
 
-    # Tentativa 2: Bloco Markdown ```json ... ```
-    block_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", text)
-    if block_match:
+    # Tentativa 2: Bloco Markdown ```json ... ``` ou ```typescript (com ou sem specifier)
+    for pattern in [
+        r"```(?:json|typescript|ts|)\s*([\s\S]*?)```",
+        r"~~~(?:json|typescript|ts|)\s*([\s\S]*?)~~~",
+    ]:
+        block_match = re.search(pattern, text)
+        if block_match:
+            try:
+                parsed = json.loads(block_match.group(1).strip())
+                if _is_valid_action_response(parsed):
+                    return parsed
+            except json.JSONDecodeError:
+                pass
+
+    # Tentativa 3: raw_decode — encontra JSON válido em qualquer posição do texto.
+    # Usa o JSONDecoder nativo que entende strings (ignora { } dentro de strings),
+    # portanto não se confunde com código TypeScript dentro dos valores do JSON.
+    decoder = json.JSONDecoder()
+    idx = 0
+    while idx < len(text):
+        next_brace = text.find('{', idx)
+        if next_brace == -1:
+            break
         try:
-            parsed = json.loads(block_match.group(1).strip())
+            parsed, end_idx = decoder.raw_decode(text, next_brace)
             if _is_valid_action_response(parsed):
                 return parsed
+            idx = end_idx
         except json.JSONDecodeError:
-            pass
-
-    # Tentativa 3: Buscar { ... } no texto
-    # Heurística: procurar chaves que contenham "actions" ou "ast_actions"
-    
-    for key in ['"actions"', '"ast_actions"']:
-        pos = text.find(key)
-        if pos != -1:
-            # Encontrar abertura de chave anterior
-            start = text.rfind('{', 0, pos)
-            if start != -1:
-                 # Tentar extrair objeto balanceado (simplificado, pode ser melhorado se precisar)
-                 # Vou usar uma abordagem iterativa de balanceamento de chaves {}
-                balance = 0
-                for i in range(start, len(text)):
-                    if text[i] == '{':
-                        balance += 1
-                    elif text[i] == '}':
-                        balance -= 1
-                        if balance == 0:
-                            try:
-                                candidate = text[start:i+1]
-                                parsed = json.loads(candidate)
-                                if _is_valid_action_response(parsed):
-                                    return parsed
-                            except:
-                                pass
-                            break
+            idx = next_brace + 1
     return None
+
 
 def _is_valid_action_response(data: Any) -> bool:
     if not isinstance(data, dict):
         return False
+    # Novo formato: { "files": { "src/App.tsx": "..." } }
+    if "files" in data and isinstance(data["files"], dict):
+        return True
+    # Legado: actions / ast_actions
     if "actions" in data and isinstance(data["actions"], list):
         return True
     if "ast_actions" in data and isinstance(data["ast_actions"], list):
@@ -341,22 +457,61 @@ async def copywrite_endpoint(request: Request):
         return {"error": str(e)}
 
 
+@router.post("/deploy-vercel")
+async def deploy_vercel_endpoint(request: Request):
+    """
+    POST /api/builder/deploy-vercel
+    Faz deploy de uma página HTML na Vercel.
+    Body: { "html": "...", "name": "minha-pagina" }
+    Retorna: { "url": "https://..." } ou { "error": "..." }
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        raw = await request.body()
+        body = json.loads(raw.decode("utf-8", errors="replace"))
+    name = body.get("name", "app").strip()
+    # Suporta tanto multi-arquivo (appFiles) quanto HTML único (html)
+    app_files: dict = body.get("appFiles") or {}
+    html: str = body.get("html", "").strip()
+
+    if not app_files and not html:
+        return {"error": "appFiles ou html são obrigatórios"}
+
+    # Monta o dict de arquivos para o serviço
+    files_to_deploy: dict[str, str] = app_files if app_files else {"index.html": html}
+
+    try:
+        from backend.services.vercel_service import deploy_to_vercel
+        url = await deploy_to_vercel(files_to_deploy, name)
+        return {"url": url}
+    except Exception as e:
+        logger.error(f"[deploy-vercel] erro: {e}", exc_info=True)
+        return {"error": str(e)}
+
+
 @router.post("/chat")
 async def builder_chat_endpoint(request: Request):
     """
     POST /api/builder/chat
-    SSE streaming para o agente builder de páginas.
+    SSE streaming para o agente builder de apps React.
     """
-    body = await request.json()
+    try:
+        body = await request.json()
+    except Exception:
+        # Fallback: lê bytes brutos e decodifica com tolerância a erros
+        raw = await request.body()
+        body = json.loads(raw.decode("utf-8", errors="replace"))
     messages = body.get("messages", [])
     files = body.get("files", [])
     agent_mode = body.get("agentMode", "creation")
-    render_mode = body.get("renderMode", "iframe") # 'ast' ou 'iframe'
-    page_state = body.get("pageState") # Dict com AST
+    render_mode = body.get("renderMode", "app")
+    page_state = body.get("pageState")
     model = body.get("model", "anthropic/claude-3.5-sonnet")
+    app_files = body.get("appFiles")  # dict[str, str] — arquivos atuais do projeto
 
     return StreamingResponse(
-        builder_stream(messages, files, agent_mode, render_mode, page_state, model),
+        builder_stream(messages, files, agent_mode, render_mode, page_state, model, app_files),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

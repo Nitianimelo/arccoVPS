@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 # Se a chave for alterada no painel admin, será recarregada no próximo ciclo de TTL.
 _api_key_cache: dict = {"key": None, "ts": 0.0}
 _search_key_cache: dict = {"key": None, "ts": 0.0}
+_vercel_key_cache: dict = {"key": None, "ts": 0.0}
 _API_KEY_TTL = 60.0  # segundos
 
 
@@ -132,6 +133,56 @@ async def get_search_key(force_refresh: bool = False) -> str:
         return _search_key_cache["key"]
 
     print("[GET_SEARCH_KEY] FATAL: Nenhuma chave de busca encontrada no Supabase (tavily/brave).")
+    return ""
+
+
+async def get_vercel_key(force_refresh: bool = False) -> str:
+    """
+    Busca a API key do Vercel do Supabase (tabela ApiKeys) — provider='vercel'.
+    Cache de 60s para evitar chamadas excessivas.
+    """
+    global _vercel_key_cache
+
+    from .config import get_config
+    config = get_config()
+
+    now = time.time()
+    if (
+        not force_refresh
+        and _vercel_key_cache["key"]
+        and (now - _vercel_key_cache["ts"]) < _API_KEY_TTL
+    ):
+        return _vercel_key_cache["key"]
+
+    supabase_url = config.supabase_url
+    supabase_key = config.supabase_key
+    headers = {
+        "apikey": supabase_key,
+        "Authorization": f"Bearer {supabase_key}",
+    }
+
+    for table_name in ["ApiKeys", "apikeys"]:
+        try:
+            url = f"{supabase_url}/rest/v1/{table_name}?select=api_key&provider=eq.vercel&is_active=eq.true"
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.get(url, headers=headers)
+                if response.status_code != 200:
+                    continue
+                rows = response.json()
+                if rows and rows[0].get("api_key"):
+                    key = rows[0]["api_key"]
+                    _vercel_key_cache = {"key": key, "ts": now}
+                    print(f"[GET_VERCEL_KEY] OK - key loaded: {key[:20]}...")
+                    return key
+        except Exception as e:
+            print(f"[GET_VERCEL_KEY] ERROR table={table_name}: {e}")
+            continue
+
+    if _vercel_key_cache["key"]:
+        print("[GET_VERCEL_KEY] WARN - usando cache antigo (Supabase indisponível)")
+        return _vercel_key_cache["key"]
+
+    print("[GET_VERCEL_KEY] Chave Vercel não encontrada no Supabase.")
     return ""
 
 
