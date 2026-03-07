@@ -181,15 +181,14 @@ PAGES_DEV_SYSTEM_PROMPT = """Você é um engenheiro frontend sênior especialist
 ## Formato de Resposta OBRIGATÓRIO
 Retorne EXATAMENTE este JSON puro (sem markdown, sem texto extra):
 {
-  "actions": [
-    { "type": "update", "file_path": "index.html", "content": "<!DOCTYPE html>..." },
-    { "type": "update", "file_path": "style.css",  "content": "/* estilos */" }
-  ],
+  "files": {
+    "index.html": "<!DOCTYPE html>...",
+    "style.css": "/* estilos */"
+  },
   "explanation": "1 frase curta descrevendo o que foi criado."
 }
 
-Tipos de action: "create", "update", "delete".
-CRÍTICO: Nunca use blocos ```json``` — retorne JSON puro direto. O campo explanation deve ter no máximo 2 frases simples, sem listas nem código."""
+CRÍTICO: Nunca use blocos ```json``` — retorne JSON puro direto. O campo explanation deve ter no máximo 2 frases simples, sem listas nem código. Use \\n para quebras de linha dentro das strings do JSON. Escape aspas duplas internas com \\"."""
 
 # ── Arcco Pages: Copywriter ───────────────────────────────────────────────────
 PAGES_COPY_SYSTEM_PROMPT = """Você é o Copywriter de Resposta Direta do Arcco Pages — especializado em textos de landing pages de alta conversão.

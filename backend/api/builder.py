@@ -359,16 +359,65 @@ async def builder_stream(
         yield sse_event("error", str(e))
 
 
-def _extract_json_response(text: str) -> dict | None:
-    """Tenta extrair JSON da resposta. Suporta formato 'files' (novo) e 'actions'/'ast_actions' (legado)."""
+def _repair_json_strings(text: str) -> str:
+    """Escapa newlines/tabs/CR literais dentro de strings JSON.
 
-    # Tentativa 1: JSON Parse direto
+    LLMs frequentemente geram JSON com quebras de linha reais nos valores das strings
+    (ex: conteúdo de arquivos TypeScript). O parser padrão rejeita isso; esta função
+    corrige o texto antes de tentar o parse novamente.
+    """
+    result: list[str] = []
+    in_string = False
+    i = 0
+    while i < len(text):
+        c = text[i]
+        if c == "\\" and in_string:
+            # sequência de escape — preserva os dois chars
+            result.append(c)
+            i += 1
+            if i < len(text):
+                result.append(text[i])
+                i += 1
+            continue
+        if c == '"':
+            in_string = not in_string
+            result.append(c)
+        elif in_string and c == "\n":
+            result.append("\\n")
+        elif in_string and c == "\r":
+            result.append("\\r")
+        elif in_string and c == "\t":
+            result.append("\\t")
+        else:
+            result.append(c)
+        i += 1
+    return "".join(result)
+
+
+def _try_parse(text: str) -> dict | None:
+    """Tenta json.loads direto e, se falhar, com reparo de strings."""
     try:
         parsed = json.loads(text)
         if _is_valid_action_response(parsed):
             return parsed
     except json.JSONDecodeError:
         pass
+    try:
+        parsed = json.loads(_repair_json_strings(text))
+        if _is_valid_action_response(parsed):
+            return parsed
+    except json.JSONDecodeError:
+        pass
+    return None
+
+
+def _extract_json_response(text: str) -> dict | None:
+    """Tenta extrair JSON da resposta. Suporta formato 'files' (novo) e 'actions'/'ast_actions' (legado)."""
+
+    # Tentativa 1: JSON Parse direto (com e sem reparo)
+    result = _try_parse(text)
+    if result:
+        return result
 
     # Tentativa 2: Bloco Markdown ```json ... ``` ou ```typescript (com ou sem specifier)
     for pattern in [
@@ -377,29 +426,27 @@ def _extract_json_response(text: str) -> dict | None:
     ]:
         block_match = re.search(pattern, text)
         if block_match:
-            try:
-                parsed = json.loads(block_match.group(1).strip())
-                if _is_valid_action_response(parsed):
-                    return parsed
-            except json.JSONDecodeError:
-                pass
+            result = _try_parse(block_match.group(1).strip())
+            if result:
+                return result
 
     # Tentativa 3: raw_decode — encontra JSON válido em qualquer posição do texto.
-    # Usa o JSONDecoder nativo que entende strings (ignora { } dentro de strings),
-    # portanto não se confunde com código TypeScript dentro dos valores do JSON.
-    decoder = json.JSONDecoder()
-    idx = 0
-    while idx < len(text):
-        next_brace = text.find('{', idx)
-        if next_brace == -1:
-            break
-        try:
-            parsed, end_idx = decoder.raw_decode(text, next_brace)
-            if _is_valid_action_response(parsed):
-                return parsed
-            idx = end_idx
-        except json.JSONDecodeError:
-            idx = next_brace + 1
+    # Tenta primeiro no texto original, depois no texto reparado.
+    for candidate in (text, _repair_json_strings(text)):
+        decoder = json.JSONDecoder()
+        idx = 0
+        while idx < len(candidate):
+            next_brace = candidate.find("{", idx)
+            if next_brace == -1:
+                break
+            try:
+                parsed, end_idx = decoder.raw_decode(candidate, next_brace)
+                if _is_valid_action_response(parsed):
+                    return parsed
+                idx = end_idx
+            except json.JSONDecodeError:
+                idx = next_brace + 1
+
     return None
 
 

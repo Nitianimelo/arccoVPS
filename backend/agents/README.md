@@ -1,3 +1,5 @@
+> Para a documentação completa e atualizada do repositório, leia `/CLAUDE.md` na raiz do projeto.
+
 # Arcco Multi-Agent Architecture (ReAct)
 
 Este documento foi criado para que **qualquer Inteligência Artificial futura (ou desenvolvedor)** que leia este repositório consiga compreender imediatamente a arquitetura da orquestração de Agentes do Arcco.
